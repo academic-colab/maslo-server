@@ -1,0 +1,315 @@
+body {
+  background: #ebf4f9;
+  background-image:url('../images/cloud.png');
+  background-repeat:no-repeat;
+  background-attachment:fixed;
+  background-position:bottom right;
+}
+header h3 {
+  display: inline-block;
+  margin: 10px;
+  font-size: 16px;
+}
+div.extra {
+   float:right;
+   margin-top: -5px;   
+}
+
+div.loginInfo {
+   float:right;
+   margin-top: 10px;
+   margin-right:50px;
+}
+
+div.extra img {
+   vertical-align: middle;
+   max-height: 50px;
+   margin: 0;
+}
+a {
+  color: #487a9f;
+}
+img.remove {
+  cursor: pointer;
+}
+
+div.action, header {
+	background-image: linear-gradient(bottom, rgb(159,159,159) 20%, rgb(195,195,195) 55%, rgb(220,220,220) 100%);
+	background-image: -o-linear-gradient(bottom, rgb(159,159,159) 20%, rgb(195,195,195) 55%, rgb(220,220,220) 100%);
+	background-image: -moz-linear-gradient(bottom, rgb(159,159,159) 20%, rgb(195,195,195) 55%, rgb(220,220,220) 100%);
+	background-image: -webkit-linear-gradient(bottom, rgb(159,159,159) 20%, rgb(195,195,195) 55%, rgb(220,220,220) 100%);
+	background-image: -ms-linear-gradient(bottom, rgb(159,159,159) 20%, rgb(195,195,195) 55%, rgb(220,220,220) 100%);
+
+	background-image: -webkit-gradient(
+		linear,
+		left bottom,
+		left top,
+		color-stop(0.2, rgb(159,159,159)),
+		color-stop(0.55, rgb(195,195,195)),
+		color-stop(1, rgb(220,220,220))
+	);
+  padding: 5px;
+  clear: both;
+}
+div.action button {
+  float: right;
+}
+div.action a {
+  font-weight: bold;
+  display: block;
+  float: left;
+}
+div.action div.alt {
+  display: none;
+  float: left;
+}
+div.action div.alt button {
+  float: none;
+}
+.clear {
+  clear: both;
+}
+
+.bottom {
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	padding: 20px;
+}
+
+table {
+  width: 100%;
+  border-spacing: 0;
+  clear: both;
+}
+thead {
+  color: white;
+  background: #666;
+}
+thead th.big {
+  text-align: left;
+}
+tbody {
+  background: white;
+}
+
+tbody.proj {
+  cursor: move;
+}
+
+tbody td {
+  border-top: 1px solid #AAA;
+}
+
+td.icon, th.icon {
+  text-align: center;
+}
+
+tbody tr {
+  background-color: #ebf4f9;
+  /*background-color:#D7DBDD;*/
+  border-bottom: 1px solid #444;
+}
+
+tbody td.fill {
+  border-top: 1px solid #AAA;
+  font-style: italic;
+  color: #666;
+}
+
+tbody tr:hover {
+  background-color: white;
+}
+
+.content {
+  display: block;
+  border: 1px solid #AAA;
+  margin-left: 2px;
+  max-width: 350px;
+  max-height: 350px;
+}
+
+div.phone {
+	background: url('/icons/phone.png') no-repeat top left;
+    position: relative;
+    margin-left: 150px;
+    width: 260px;
+    height: 375px;
+    color: black;
+    padding: 120px 35px;
+}
+
+div.phone.horizontal {
+	background: url('/icons/phone-h.png') no-repeat top left;
+	margin-left: 20px;
+	margin-top: 100px;
+    padding: 35px 115px;
+    width: 420px;
+    height: 270px;
+}
+
+div.phone.horizontal div.viewport {
+    height: 250px;
+    width: 365px;
+}
+
+div.phone div.viewport {
+    height:365px;
+    width: 250px;
+    overflow: auto;
+    padding-right: 65px;
+}
+
+div.phone.horizontal div.viewport {
+    padding-right: 150px;
+}
+div.phone div.canvas img {
+    max-width: 255px;
+    margin-bottom: 10px;
+}
+div.phone.horizontal div.canvas img {
+    max-width: 360px;
+}
+
+div.phone b {
+		font-weight: bold;
+}
+div.phone i {
+	font-style: italic;
+}
+
+div.movement {
+	position: absolute;
+	top: 450px;
+	left: 320px;
+	width: 530px;
+}
+
+div.movement a.move {
+	display: block;
+	width: 70px;
+	height: 45px;
+}
+
+div.movement a.move.left:hover, div.movement a.move.right:hover {
+	background-position: 0 -46px;
+}
+
+div.movement a.move.left {
+	background: url(/icons/arrow_left.png) no-repeat;
+	float: left;
+}
+
+div.movement a.move.right {
+	background: url(/icons/arrow_right.png) no-repeat;
+	float: right;
+}
+
+ul.data {
+	margin: 0;
+	padding: 0;
+}
+
+ul.data ul {
+	list-style-type: disc;
+}
+
+div.nav {
+    margin-top: 10px;
+    margin-right: 20px;
+    background-color: transparent;
+    padding: 0;
+}
+div.nav h2 {
+    background: white;
+		color: #11639d;
+    margin: 0;
+    font-size: large;
+    padding: 10px;
+    padding-top: 30px;
+    text-align: center;
+    border-left: 1px solid #999;
+    border-right: 1px solid #999;
+}
+
+div.nav select {
+	display: block;
+}
+
+div.nav img {
+	display: inline-block;
+}
+
+div.flippers {
+	text-align: center;
+	margin-bottom: 50px;
+}
+div.flippers a {
+	vertical-align: middle;
+}
+
+a.vertical {
+	background: url(/icons/phone_set_vert.png) no-repeat 0 0;
+	width: 53px;
+	height: 85px;
+	display: inline-block;
+	overflow: none;
+}
+a.vertical.active {
+	background: url(/icons/phone_set_vert.png) no-repeat 0 -85;
+}
+
+a.horizontal {
+	background: url(/icons/phone_set_horiz.png) no-repeat 0 0;
+	width: 90px;
+	height: 50px;
+	display: inline-block;
+}
+a.horizontal.active {
+	background: url(/icons/phone_set_horiz.png) no-repeat 0 -50;
+}
+
+select {
+	background: transparent;
+}
+
+#focus {
+    width: 1000px;
+    margin: 20px auto;
+    position: relative;
+}
+
+#focus > div {
+    float: left;
+}
+
+#dialog-content img {
+	max-height: 400px;
+	max-width: 500px;
+	display: block;
+	margin: 0 auto;
+}
+
+#dialog-content fieldset input[type=button] {
+	display: block;
+}
+
+#dialog-content img.remove {
+	display: inline-block;
+	margin-right: 10px;
+}
+
+div.answer {
+	margin-bottom: 10px;
+}
+input.feedback {
+	margin-top: 5px;
+	margin-left: 25px;
+}
+
+fieldset {
+	border: none;
+}
+
+
