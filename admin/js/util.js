@@ -94,7 +94,7 @@ function editUser(isNew){
 			var hasAdmin = (admin) ? "yes" : "no";
 			td = "<td>"+hasAdmin+"</td>";
 			tr.append(td);
-			td = $('<td class="icon"><img class="removeUser" src="icons/remove.png" alt="Remove User" /></td>');
+			td = $('<td class="icon"><img class="removeUser" src="images/remove.png" alt="Remove User" /></td>');
 			tr.append(td);
 			$('#userBody').append(tr);
 			makeLinks();	
@@ -185,4 +185,25 @@ function initRemoveUserClick() {
 		});
 		return false;
 	});
+}
+
+function prepPreview(title){
+	sendData = {'function':'preparePreview','data':title};
+	$.ajax({
+		async: false,
+		global: false,
+		url: 'modify.php',
+		type: 'post',
+		dataType: "text",
+		data: sendData,
+	  success: function(data) {
+		if (data == "OK.") {
+			doPreview(title);
+		} 
+	  },
+	error: function(data) {
+		alert("error..." + data) ;
+	} 
+	});
+	return false;
 }

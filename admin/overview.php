@@ -154,6 +154,7 @@ session_start();
 					<?php
 					if (isset($_SESSION['user'])){
 						echo "<th>Location</th>";
+						echo "<th>Published</th>";
 						echo "<th>Remove</th>";
 					}
 					?>
@@ -163,35 +164,46 @@ session_start();
 				<?php
 				// Retrieve and list all available content packs
 				$default_dir = "../uploads/";
+				$q_dir = "../qDir-uploads/";
 				$s3ConfigStream = file_get_contents("../config.json");
 				$s3Config = json_decode($s3ConfigStream, true);
 				if ($s3Config["wantS3"] == "true") {
 					$json = json_decode(traverseDirAmazon($s3Config["bucket"],$s3Config["baseDir"]),true);
+					$qjson = json_decode(traverseDirAmazon($s3Config["bucket"],"qDir-".$s3Config["baseDir"]),true);
 				} else {
 					$json = json_decode(traverseDir($default_dir),true);
+					$qjson = json_decode(traverseDir($q_dir),true);
 				}
 				$json = $json["data"];
-				$i = 0;
-				$db = new MyDB('../uploads/search.db');
-				$query = "SELECT version, author FROM content where pack == :id";
 				
+				$db = new MyDB('../uploads/search.db');
+				$query = "SELECT version, author, public FROM content where pack == :id";
+				$j = 0;
+				while ($j < 2) {
+				$i = 0;
 				while ($i < count($json)) {
 					$stmt = $db->prepare($query);
 					$author = "N/A";
 					$version = "N/A";
+					$published = 0;
 					if ($stmt){
 						$stmt->bindValue(':id', $json[$i]["title"], SQLITE3_TEXT);
 						$result = $stmt->execute();
 						$resultRows = $result->fetchArray(SQLITE3_ASSOC);
 						$author = $resultRows["author"];
 						$version = $resultRows["version"];
+						$published =  $resultRows["public"];
 					}
 					$size = "N/A";
 					if (array_key_exists("size", $json[$i]))
 						$size = $json[$i]["size"];
 					
 					echo "<tr>";
-					echo "<td>".$json[$i]["title"]."</td>";
+					if ($published == 0 && isset($_SESSION['user'])){
+						echo "<td><a href='#' onclick='prepPreview($(this).text());'>".$json[$i]["title"]."</a></td>";
+					} else {					
+						echo "<td>".$json[$i]["title"]."</td>";
+					}
 					echo "<td>".$version."</td>";
 					echo "<td>".$json[$i]["date"]."</td>";
 					echo "<td>".$author."</td>";
@@ -202,9 +214,16 @@ session_start();
 							$loc = "S3";
 						}
 						echo '<td>'.$loc.'</td>';
+						if ($published == 1)
+							echo '<td><input type="checkbox" class="checkPub" checked="checked"></input></td>';
+						else 
+							echo '<td><input type="checkbox"  class="checkPub"></input></td>';	
 						echo '<td class="icon"><img class="remove" src="images/remove.png" alt="Remove Item" /></td>';
 					}
 					$i = $i+1;
+				}
+				$j = $j+1;
+				$json = $qjson["data"]; 
 				}
 				$db->closeDB();				
 				?>
@@ -226,10 +245,15 @@ session_start();
 		</div>
 	</div>
 	</div>	
-	
+	<div id="dialog-preview"  style="display: none" title="Content Pack Preview">
+	</div>
 	<div id="dialog-confirm" style="display: none" title="Delete">
 		<p>The <span id="condemned"></span>
 		will be permanently deleted and cannot be recovered.
+		Are you sure?</p>
+	</div>
+	<div id="dialog-confirm-publish" style="display: none" title="Publish/Unpublish">
+		<p>This will <span id="which-pub"></span> content pack <span id="pub-pack"></span>.
 		Are you sure?</p>
 	</div>
 	<div id="info-div"  style="display: none" title="Info"></div>
@@ -286,6 +310,7 @@ session_start();
 <script type="text/javascript" src="js/sha256.js"></script>
 <script type="text/javascript" src="js/util.js"></script>
 <script type="text/javascript" src="js/user.js"></script>
+<script type="text/javascript" src="js/preview.js"></script>
 
 <script type="text/javascript">
 
@@ -294,6 +319,94 @@ $(document).ready(function() {
 
 // -------------------------- REGISTER LINK CLICKS -------------------------
 	$tabs = $( "#divTabs" ).tabs();
+		
+	
+	$(".checkPub").click(function(){
+		var tdTag = $($(this).parent().parent().children()[0]);
+		var aTag = tdTag.find('a');
+		if (aTag.length == 0)
+			aTag = tdTag;
+		var title = aTag.text();
+		
+		$("#pub-pack").html(title);
+		var sendData = title.replace(/ /g, ":::");
+		var checkbox = $(this);
+		if ($(this).is(":checked")) {
+			sendData = {'function':'publishPack','data':sendData};
+			$("#which-pub").html("publish");
+			$( "#dialog-confirm-publish" ).dialog({
+				height:240,
+				modal: true,
+				buttons: {
+					"Publish": function() {
+						$( this ).dialog( "close" );
+						$.ajax({
+							async: false,
+							global: false,
+							url: 'modify.php',
+							type: 'post',
+							dataType: "text",
+							data: sendData,
+						  success: function(data) {
+							tdTag.html(title);
+							return false;
+						  },
+						error: function(data) {
+							showInfo("Pack publishing failed: " + data) ;
+							checkbox.removeAttr('checked');
+						} 
+						});
+
+					},
+					Cancel: function() {
+						checkbox.removeAttr('checked');
+						$( this ).dialog( "close" );
+					}
+				}
+			});
+		} else {
+			sendData = {'function':'unPublishPack','data':sendData};
+			$("#which-pub").html("unpublish");
+			$( "#dialog-confirm-publish" ).dialog({
+				height:240,
+				modal: true,
+				buttons: {
+					"Unpublish": function() {
+						$( this ).dialog( "close" );
+						$.ajax({
+							async: false,
+							global: false,
+							url: 'modify.php',
+							type: 'post',
+							dataType: "text",
+							data: sendData,
+						  success: function(data) {
+							linkTag = $('<a href="#">'+title+'</a>');
+							linkTag.click(function(e){
+								prepPreview(title);
+								return false;
+							});
+							tdTag.html("");
+							tdTag.append(linkTag);							
+							return false;
+						  },
+						error: function(data) {
+							checkbox.attr('checked', 'checked');
+							showInfo("Pack unpublishing failed: " + data) ;
+						} 
+						});
+
+					},
+					Cancel: function() {
+						checkbox.attr('checked', 'checked');
+						$( this ).dialog( "close" );
+					}
+				}
+			});
+			
+		}
+		
+	});
 	
 	$("#packsClick").click(function(){
 		$("h3").html("Content Pack Overview");
@@ -334,10 +447,16 @@ $(document).ready(function() {
 	
 	$('img.remove').click(function(e) {
 		var elt = $(this).parent().parent();
-		$("#condemned").text("content pack '"+elt.children()[0].innerHTML+"'");
-		var sendData = elt.children()[0].innerHTML;
+		var aTag = $(elt.children()[0]).find('a');
+		if (aTag.length == 0)
+			aTag = $(elt.children()[0]);
+		var title = aTag.text();
+		$("#condemned").text("content pack '"+title+"'");
+		var sendData = title;
+		var isPublished = $(elt).find(".checkPub");
+		isPublished = ($(isPublished).is(":checked")) ? "true" : "false";
 		sendData = sendData.replace(/ /g, ":::");
-		sendData = {'function':'deletePack','data':sendData};
+		sendData = {'function':'deletePack','data':sendData, 'published':isPublished};
 
 		$( "#dialog-confirm" ).dialog({
 			height:240,

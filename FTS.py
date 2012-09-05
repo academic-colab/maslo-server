@@ -79,7 +79,7 @@ def createTable(db):
 
 ## Create basic content pack table		
 def createTableUpper(db):
-	statement = "CREATE TABLE content (pack text, path text, version text, author text);"
+	statement = "CREATE TABLE content (pack text, path text, version text, author text, public int DEFAULT 0);"
 	try :
 		db.execute(statement)
 		db.commit()
@@ -101,7 +101,8 @@ def insertData(pack, path, db, zipName=None, versionPath=None, author=None):
 				version = versionData["version"]
 			authorVal = author
 		try : 
-			db.execute(query2, (pack, zipName,version, authorVal))
+			zn = zipName.replace("qDir-", "")
+			db.execute(query2, (pack, zn,version, authorVal))
 		except :
 			pass
 	pattern = re.compile("<[^>]+>")	

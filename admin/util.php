@@ -65,12 +65,74 @@ function verifyUser($userName, $password){
 	return false;
 }
 
+function preparePreview($title) {
+	$cmd = 'mkdir "../uploads/tmp/preview-'.$title.'"';
+	exec($cmd);
+	$db = new MyDB('../uploads/search.db');
+	$query = "SELECT public,path FROM content WHERE pack == :id";
+	$stmt = $db->prepare($query);
+	$public = -1;
+	$path = "";
+	if ($stmt){
+		$stmt->bindValue(':id', $title, SQLITE3_TEXT);
+		$result = $stmt->execute();
+		$resultRows = $result->fetchArray(SQLITE3_ASSOC);
+		while ($resultRows){
+			$public = $resultRows["public"];
+			$path = $resultRows["path"];
+			$resultRows = $result->fetchArray(SQLITE3_ASSOC);
+		}
+	} else {
+		$db->closeDB();
+		return false;
+	}
+	$db->closeDB();
+	if ($public < 0){
+		return false;
+	}
+	
+	$s3ConfigStream = file_get_contents("../config.json");
+	$s3Config = json_decode($s3ConfigStream, true);
+	$bucket = $s3Config["bucket"];
+	$baseDir = $s3Config["baseDir"]."/";
+	if ($public == 0)
+		$baseDir = "qDir-".$baseDir;
+	if ($s3Config["wantS3"] == "true"){
+		$s3 = new AmazonS3();
+		$response = $s3->get_object_list($bucket, array(
+		   'prefix' => $baseDir.$title
+		));
+		foreach ($response as $v) {
+		    $pos = strpos($v, ".zip");
+			if ($pos > 0) {
+				
+			}
+		}
+	} else {
+		$zipDir = $path;
+		if ($public == 0){
+			$zipDir = "qDir-".$zipDir;			
+		}
+		$zipDir = "../".$zipDir;
+		$cmd = 'unzip -d "../uploads/tmp/preview-'.$title.'" "'.$zipDir.'"';
+		exec($cmd);
+		
+	}
+	return true;
+}
+
+function removePreview($title){
+	$cmd = 'rm -rf "../uploads/tmp/preview-'.$title.'"';
+	exec($cmd);
+	return true;
+}
+
 /*** 
  * Delete content pack
  * $title: Content pack title
  * returns: true, if pack successfully deleted, false otherwise
  */
-function deleteData($title){
+function deleteData($title, $isPublished){
 	if (isset($_SESSION['init'])){
 	$db = new MyDB('../uploads/search.db');
 	$query = "DELETE FROM content where pack == :id";
@@ -94,6 +156,8 @@ function deleteData($title){
 	$s3Config = json_decode($s3ConfigStream, true);
 	$bucket = $s3Config["bucket"];
 	$baseDir = $s3Config["baseDir"]."/";
+	if (!$isPublished)
+		$baseDir = "qDir-".$baseDir;
 	if ($s3Config["wantS3"] == "true"){
 		$s3 = new AmazonS3();
 		$response = $s3->get_object_list($bucket, array(
@@ -101,14 +165,15 @@ function deleteData($title){
 		));
 		foreach ($response as $v) {
 		    $s3->batch()->delete_object($bucket, $v);
-		}		
-		$file_upload_response = $s3->batch()->send();
-		
-		$s3->create_object($bucket, $baseDir."search.db", array(
+		}						
+		$s3->batch()->create_object($bucket, $s3Config["baseDir"]."/search.db", array(
 			'fileUpload' => '../uploads/search.db'
 		));
+		$file_upload_response = $s3->batch()->send();
 	} else {
-		$cmd = 'rm -rf "../uploads/'.$title.'"';
+		$cmd = 'rm -rf "../qDir-uploads/'.$title.'"';
+		if ($isPublished)
+			$cmd = 'rm -rf "../uploads/'.$title.'"';
 		exec($cmd);
 	}
 	return true;
@@ -116,12 +181,143 @@ function deleteData($title){
 	return false;
 }
 
+/*** 
+ * Publish content pack
+ * $title: Content pack title
+ * returns: true, if pack successfully published, false otherwise
+ */
+function publishData($title){
+	if (isset($_SESSION['init'])){
+	$db = new MyDB('../uploads/search.db');
+	$query = "UPDATE content SET public = 1 where pack == :id";
+	$stmt = $db->prepare($query);
+	if ($stmt){
+		$stmt->bindValue(':id', $title, SQLITE3_TEXT);
+		$stmt->execute();
+	}
+	$db->closeDB();
+	$s3ConfigStream = file_get_contents("../config.json");
+	$s3Config = json_decode($s3ConfigStream, true);
+	$bucket = $s3Config["bucket"];
+	$baseDir = $s3Config["baseDir"]."/";
+	if ($s3Config["wantS3"] == "true"){
+		$oldFn = 'qDir-'.$baseDir.$title;
+		$newFn = $baseDir.$title;
+		$s3 = new AmazonS3();
+		$response = $s3->get_object_list($bucket, array(
+		   'prefix' => $oldFn
+		));
+		foreach ($response as $v) {
+			$v2 = str_replace($oldFn, "", $v);
+			$s3->copy_object(array('bucket' => $bucket, 'filename' => $oldFn.$v2), array('bucket' => $bucket, 'filename' => $newFn.$v2),array('acl'  => AmazonS3::ACL_PUBLIC));
+			$s3->batch()->delete_object($bucket, $v);
+		}			
+				
+		$file_upload_response = $s3->batch()->send();		
+		$s3->create_object($bucket, $baseDir."search.db", array(
+			'fileUpload' => '../uploads/search.db'
+		));
+	} else {
+		$cmd = 'mv  "../qDir-uploads/'.$title.'" "../uploads/'.$title.'"';
+		exec($cmd);
+	}
+	return true;
+	}
+	return false;
+}
+
+/*** 
+ * Unpublish content pack
+ * $title: Content pack title
+ * returns: true, if pack successfully unpublished, false otherwise
+ */
+function unPublishData($title){
+	if (isset($_SESSION['init'])){
+	$db = new MyDB('../uploads/search.db');
+	$query = "UPDATE content SET public = 0 where pack == :id";
+	$stmt = $db->prepare($query);
+	if ($stmt){
+		$stmt->bindValue(':id', $title, SQLITE3_TEXT);
+		$stmt->execute();
+	}
+	$db->closeDB();
+	$s3ConfigStream = file_get_contents("../config.json");
+	$s3Config = json_decode($s3ConfigStream, true);
+	$bucket = $s3Config["bucket"];
+	$baseDir = $s3Config["baseDir"]."/";
+	if ($s3Config["wantS3"] == "true"){
+		$newFn = 'qDir-'.$baseDir.$title;
+		$oldFn = $baseDir.$title;
+		$s3 = new AmazonS3();
+		$response = $s3->get_object_list($bucket, array(
+		   'prefix' => $oldFn
+		));
+		foreach ($response as $v) {
+			$v2 = str_replace($oldFn, "", $v);
+			$s3->batch()->copy_object(array('bucket' => $bucket, 'filename' => $oldFn.$v2), array('bucket' => $bucket, 'filename' => $newFn.$v2),array('acl'  => AmazonS3::ACL_PUBLIC));
+			$s3->batch()->delete_object($bucket, $v);
+		}			
+				
+		$file_upload_response = $s3->batch()->send();		
+		$s3->create_object($bucket, $baseDir."search.db", array(
+			'fileUpload' => '../uploads/search.db'
+		));
+	} else {
+		$cmd = 'mv "../uploads/'.$title.'" "../qDir-uploads/'.$title.'" ';
+		exec($cmd);
+	}
+	return true;
+	}
+	return false;
+}
+
+/***
+ * Initializes search DB - will update schema if needed.
+ */
+function initSearchDB($checkUpdate){
+	$db = new MyDB('../uploads/search.db');
+	$query = "SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='content'";
+	
+	$stmt = $db->prepare($query);
+	if ($stmt){
+		$query = "SELECT public FROM content";
+		$stmt = $db->prepare($query);
+		if ($stmt){
+			$db->closeDB();
+			return true;
+		} else {
+			$query = "ALTER TABLE content ADD public int DEFAULT 0";
+			$db->exec($query);
+			$query = "UPDATE content SET public=1 WHERE public=0";
+			$db->exec($query);
+		}
+		
+	} else if (!$checkUpdate){
+		
+		$query = "CREATE TABLE content (pack text, path text, version text, author text, public int DEFAULT 0)";
+		$query2 = "CREATE VIRTUAL TABLE content_search using FTS3(pack,section,content,tokenize=porter)";
+		$stmt = $db->prepare($query);
+		if ($stmt){		
+			if ($stmt->execute()){
+				$stmt = $db->prepare($query2);
+				if ($stmt){		
+					$stmt->execute();
+				}
+			}		
+		} else {
+			return false;		
+		}
+	}
+	$db->closeDB();
+	return false;
+}
 
 /*** 
  * Intitializes store with upload directories and database setup
  * returns: true, if initialization successful, false otherwise
  */
 function initDBs(){
+	initSearchDB(true);
 	$db = new MyDB('../users.db');
 	$initQuery = "SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='users'";
 	$stmt = $db->prepare($initQuery);		
@@ -172,21 +368,9 @@ function initDBs(){
 	$db->closeDB();
 	$cmd = "mkdir ../uploads";
 	exec($cmd);
-	$db = new MyDB('../uploads/search.db');
-	$query = "CREATE TABLE content (pack text, path text, version text, author text)";
-	$query2 = "CREATE VIRTUAL TABLE content_search using FTS3(pack,section,content,tokenize=porter)";
-	$stmt = $db->prepare($query);
-	if ($stmt){		
-		if ($stmt->execute()){
-			$stmt = $db->prepare($query2);
-			if ($stmt){		
-				$stmt->execute();
-			}
-		}		
-	} else {
-		return false;		
-	}
-	$db->closeDB();
+	$cmd = "mkdir ../qDir-uploads";
+	exec($cmd);
+	initSearchDB(false);
 }
 
 /*** 

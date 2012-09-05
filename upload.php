@@ -162,7 +162,8 @@ function checkForPackExist($packName){
 * it recompiles them and processes the data
 */
 function receiveUpload(){
-	$mainLocation = 'uploads/';
+	$mainLocation = 'qDir-uploads/';
+	$searchLocation = 'uploads/';
 	$sessionLocation = $mainLocation."tmp/".session_id().'/';	
 	if (!is_dir($sessionLocation)){
 		if (!is_dir($mainLocation."tmp/")){
@@ -234,7 +235,7 @@ function receiveUpload(){
 		
 		checkForPackExist($packTitle);	
 		
-		runFTS($dirname, $packTitle, $mainLocation, $mainLocation.$folderName.$zipName, $unchanged."/version");
+		runFTS($dirname, $packTitle, $searchLocation, $mainLocation.$folderName.$zipName, $unchanged."/version");
 		addSearchDB($zipName, $folderName  , $sessionLocation);
 		exec("mkdir ".$dirname2);
 
@@ -248,16 +249,16 @@ function receiveUpload(){
 			$baseDir = $s3Config["baseDir"]."/";
 			try {
 				$s3 = new AmazonS3();
-				$s3->batch()->create_object($bucket, $baseDir.$folderName.$zipName, array(
+				$s3->batch()->create_object($bucket, "qDir-".$baseDir.$folderName.$zipName, array(
 					'fileUpload' => $unchangedDest.$zipName,
 					'acl'         => AmazonS3::ACL_PUBLIC
 					));
-				$s3->batch()->create_object($bucket, $baseDir.$folderName."manifest", array(
+				$s3->batch()->create_object($bucket, "qDir-".$baseDir.$folderName."manifest", array(
 					'fileUpload' => $unchangedDest."manifest",
 					'acl'         => AmazonS3::ACL_PUBLIC
 				));
 				$s3->batch()->create_object($bucket, $baseDir."search.db", array(
-					'fileUpload' => $mainLocation."search.db"
+					'fileUpload' => $searchLocation."search.db"
 				));
 				$file_upload_response = $s3->batch()->send();
 				exec("rm -rf ".$dirname2);

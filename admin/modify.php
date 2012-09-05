@@ -32,19 +32,30 @@ if (isset($_SESSION['init'])){
 	$inputData = $_POST;
 	$data = "";
 	$function = "";
-	
+	$isPublished = false;
 	foreach ($inputData as $key => $value) {		
 		if ($key == "function"){
 			$function = $value;
-		} else {
+		} else if ($key=="published"){
+			if ($value[0] == 't' || $value[0] == 'T'){
+				$isPublished = true;
+			}
+		} else 
 			$data = $value;
-		}
 	}
 	if ($data != "") {
 		$data = str_replace(":::", " ",$data);
 		$res = false;
 		if ($function == "deletePack")
-			$res = deleteData($data);
+			$res = deleteData($data, $isPublished);
+		else if ($function == "publishPack")
+			$res = publishData($data);
+		else if ($function == "unPublishPack")
+			$res = unPublishData($data);
+		else if ($function == "preparePreview")
+			$res = preparePreview($data);
+		else if ($function == "removePreview")
+			$res = removePreview($data);
 		else if ($function == "deleteUser")
 			$res = deleteUser($data);
 		else if ($function == "editUser") {

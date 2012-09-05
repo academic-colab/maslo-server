@@ -23,6 +23,8 @@
 /*
  *  @author Cathrin Weiss (cathrin.weiss@uwex.edu)
  */
+require_once 'traverse.php';
+
 class MyDB extends SQLite3
 {
     function __construct()
@@ -54,6 +56,7 @@ function processInput() {
 	return $data;
 }
 
+
 /***
  * Query the database for search string
  * @return: JSON string containing the result
@@ -63,7 +66,7 @@ function queryDB() {
 	$parameter = processInput();
 	$db = new MyDB();
 	
-	$stmt = $db->prepare("SELECT content_search.pack as title, section, '".$callingURL."' || path as filename FROM content_search, content WHERE content match :id and content_search.pack == content.pack order by title");
+	$stmt = $db->prepare("SELECT content_search.pack as title, section, '".$callingURL."' || path as filename FROM content_search, content WHERE content match :id and content_search.pack == content.pack and content.public == 1 order by title");
 	$stmt->bindValue(':id', $parameter, SQLITE3_TEXT);
 
 
@@ -75,6 +78,18 @@ function queryDB() {
 	$sections = array();
 	$resRow = array();
 	$numResults = 0;
+	$jsonData = array();
+	$s3ConfigStream = file_get_contents("config.json");
+	$s3Config = json_decode($s3ConfigStream, true);
+	if ($s3Config["wantS3"] == "true") {
+		$json = json_decode(traverseDirAmazon($s3Config["bucket"],$s3Config["baseDir"]),true);
+		$json = $json["data"];
+		$i = 0;
+		while ($i < count($json)) {
+			$jsonData[$json[$i]["title"]] = $json[$i]["filename"];
+			$i++;
+		}
+	}
 	while ($resultRows = $result->fetchArray(SQLITE3_ASSOC)) {		
 		if ($currentPack == null){
 			$currentPack = $resultRows["title"];
@@ -97,6 +112,9 @@ function queryDB() {
 		}
 		$resRow["title"] = $resultRows["title"];
 		$resRow["filename"] = $resultRows["filename"];
+		if (array_key_exists($resRow["title"] , $jsonData)) {
+			$resRow["filename"] = $jsonData[$resRow["title"]];
+		}
 		array_push($sections, $resultRows["section"]);
 	}
 	if ($numResults > 0) {

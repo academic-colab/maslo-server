@@ -61,6 +61,7 @@ function traverseDir($dir) {
 	return $all_json;
 }
 
+
 /***
  * Traverse Amazon bucket with name $bucket and directory name $dir
  */
@@ -106,6 +107,21 @@ function doTraverse(){
 	$s3Config = json_decode($s3ConfigStream, true);
 	if ($s3Config["wantS3"] == "true") {
 		$json = traverseDirAmazon($s3Config["bucket"],$s3Config["baseDir"]);
+	} else{
+		$json = traverseDir($default_dir);
+	}
+	return $json;
+}
+
+/***
+ * Traverse quarantine data
+ */
+function traverseQuarantine(){
+	$default_dir = "qDir/";
+	$s3ConfigStream = file_get_contents("config.json");
+	$s3Config = json_decode($s3ConfigStream, true);
+	if ($s3Config["wantS3"] == "true") {
+		$json = traverseDirAmazon($s3Config["bucket"],$s3Config["baseDir"]."-qDir");
 	} else{
 		$json = traverseDir($default_dir);
 	}
