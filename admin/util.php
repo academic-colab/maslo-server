@@ -317,20 +317,20 @@ function initSearchDB($checkUpdate){
  * returns: true, if initialization successful, false otherwise
  */
 function initDBs(){
-	initSearchDB(true);
 	$db = new MyDB('../users.db');
 	$initQuery = "SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='users'";
 	$stmt = $db->prepare($initQuery);		
 	if (!$stmt){
 		$db->closeDB();
-		return true;
-	}
-	$result = $stmt->execute();
-	$resultRows = $result->fetchArray(SQLITE3_ASSOC);
-	$cnt = $resultRows["count"];
-	if (intval($cnt) > 0) {
-		$db->closeDB();
-		return true;	
+	} else { 
+		$result = $stmt->execute();
+		$resultRows = $result->fetchArray(SQLITE3_ASSOC);
+		$cnt = $resultRows["count"];
+		if (intval($cnt) > 0) {
+			$db->closeDB();
+			initSearchDB(true);
+			return true;	
+		}
 	}
 	
 	$query = "CREATE TABLE users (uname text, upass text, firstName text, lastName text, institution text)";
@@ -345,9 +345,7 @@ function initDBs(){
 				$stmt->execute();
 			}
 		}		
-	} else {
-		return false;		
-	}
+	} 
 	$db->closeDB();
 	$db = new MyDB('admin.db');
 	$query = "CREATE TABLE users (uname text, upass text, firstName text, lastName text, institution text)";
@@ -362,9 +360,7 @@ function initDBs(){
 				$stmt->execute();
 			}
 		}		
-	} else {
-		return false;		
-	}
+	} 
 	$db->closeDB();
 	$cmd = "mkdir ../uploads";
 	exec($cmd);
