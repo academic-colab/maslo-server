@@ -24,6 +24,7 @@
  *  @author Cathrin Weiss (cathrin.weiss@uwex.edu)
  */
 
+//header('Content-Type: text/html; charset=utf-8'); 
 date_default_timezone_set('America/Chicago');
 require_once 's3sdk/sdk.class.php';
 
@@ -47,7 +48,13 @@ session_start();
  */
 function runFTS($path, $name, $globalPath, $zipName, $pathToVersion){
 	$userName = $_POST['userName'];
-	exec("python FTS.py $path \"$name\" $globalPath \"$zipName\" \"$pathToVersion\" \"$userName\"");
+	$stripPath = str_replace('"', '\"',$path);
+	$stripVPath = str_replace('"', '\"',$pathToVersion);
+	$zName = str_replace('"', '\"',$zipName);
+	$stripName = str_replace('"', '\"',$name);
+	$cmd = 'python FTS.py "'.$stripPath.'" "'.$stripName.'" "'.$globalPath.'" "'.$zName.'" "'.$stripVPath.'" "'.$userName.'" >> FTS.out 2>&1';
+	
+	exec($cmd);
 }
 
 /***
@@ -60,9 +67,17 @@ function runFTS($path, $name, $globalPath, $zipName, $pathToVersion){
 function doUnzip($fileName, $folderName, $destination){
 	$cmd = "unzip -d $destination $fileName";	
 	exec($cmd);
+	$packTitle = $_POST['dirName'];
+	$encTitle = urlencode($packTitle);
+	$encTitle = str_replace('+', '%20', $encTitle);
+	$encTitle = str_replace('%27', "'", $encTitle);
+	if ($encTitle != $packTitle){
+		rename($destination.'/'.$encTitle, $destination.'/'.$packTitle);
+	}
 	return $folderName;
 
 }
+ 
 
 /***
  * Add search database to zip file
@@ -71,8 +86,9 @@ function doUnzip($fileName, $folderName, $destination){
  * $sessionLocation: path to the temporary project directory
  * @return: false
  */
-function addSearchDB($zipName, $folder, $sessionLocation){	
-	$cmd = 'sh doZip.sh '.$sessionLocation.' "'.$zipName.'" "'.$folder.'"';
+function addSearchDB($zipName, $folder, $sessionLocation){
+	$f = str_replace('"', '\"', $folder);
+	$cmd = 'sh doZip.sh "'.addslashes($sessionLocation).'" "'.addslashes($zipName).'" "'.$f.'"';
 	exec($cmd);
 	return false;
 }
@@ -85,11 +101,12 @@ function addSearchDB($zipName, $folder, $sessionLocation){
  * $manifestPath: Path to temporary project directory
  */
 function createManifest($title, $path, $zipPath, $manifestPath){
+	$manifestPath = stripslashes($manifestPath);
 	$versionStream = file_get_contents($manifestPath."/version");
 	$versionData = json_decode($versionStream, true);
 	$version = $versionData["version"];
 	$today = date("Y-m-d");  
-	$data = '{"title": "'.$title.'", "filename":"'.$zipPath.'", "course":"", "date":"'.$today.'", "version":"'.$version.'", "size":"'.$_SESSION["packSize"].'"}';
+	$data = '{"title": "'.str_replace('"', '\"', $title).'", "filename":"'.str_replace('"', '\"', $zipPath).'", "course":"", "date":"'.$today.'", "version":"'.$version.'", "size":"'.$_SESSION["packSize"].'"}';
 	$fname = str_replace("\ ", " ", $path);
 	$fname =  $fname."manifest";
 	$file = fopen($fname, "w");
@@ -217,7 +234,8 @@ function receiveUpload(){
 		$plainDir = $sessionLocation.str_replace(" ", "\ ", $plainDir);
 		
 		$res = doUnzip($zipFileName, $folderName, $sessionLocation);
-		$cmd = "du -hs '$unchanged'";
+		$cmd = 'du -hs "'.$sessionLocation.str_replace('"', '\"',$folderName).'"';
+
 		$io = popen($cmd, "r");
 		$size = fgets($io, 4096);	
 		$size = trim($size);
@@ -226,22 +244,19 @@ function receiveUpload(){
 		$_SESSION['packSize'] = $size;
 		$zipName = $_POST['zipName'];
 		$packTitle = $_POST['packTitle'];		
-		$dirname = $sessionLocation.$res;
-		$dirname2 = str_replace(" ", "\ ", $dirname);
-		$dirname = $dirname2;
-		$dirname2 = str_replace(" ", "\ ",$folderName);
-		$dirname2 = $mainLocation.$dirname2;
 		$zipFileName = $sessionLocation.$zipName;
 		
 		checkForPackExist($packTitle);	
 		
-		runFTS($dirname, $packTitle, $searchLocation, $mainLocation.$folderName.$zipName, $unchanged."/version");
+		runFTS($sessionLocation.$folderName, $packTitle, $searchLocation, $mainLocation.$folderName.$zipName, $unchanged."/version");
+		
 		addSearchDB($zipName, $folderName  , $sessionLocation);
-		exec("mkdir ".$dirname2);
-
-		exec("mv $zipFileName ".$dirname2.$zipName);
-		createManifest($packTitle, $dirname2, $zipName, $unchanged);
-		exec("rm -rf $sessionLocation");
+		
+		mkdir($mainLocation.$folderName);
+		rename($zipFileName, $mainLocation.$folderName.$zipName);
+		
+		createManifest($packTitle, $mainLocation.$folderName, $zipName, $unchanged);
+		exec('rm -rf "'.$sessionLocation.'"');
 		$s3ConfigStream = file_get_contents("config.json");
 		$s3Config = json_decode($s3ConfigStream, true);
 		if ($s3Config["wantS3"] == "true") {
@@ -261,7 +276,10 @@ function receiveUpload(){
 					'fileUpload' => $searchLocation."search.db"
 				));
 				$file_upload_response = $s3->batch()->send();
-				exec("rm -rf ".$dirname2);
+				unlink("qDir-".$baseDir.$folderName.$zipName);
+				unlink("qDir-".$baseDir.$folderName."manifest");
+				rmdir("qDir-".$baseDir.$folderName);
+
 			} catch (Exception $e){
 
 			}

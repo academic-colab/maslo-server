@@ -86,6 +86,8 @@ def createTableUpper(db):
 	except:
 		pass
 
+
+
 ## insert data into content pack tables - FTS and basic
 def insertData(pack, path, db, zipName=None, versionPath=None, author=None):
 	data = getJSON(path)
@@ -102,8 +104,10 @@ def insertData(pack, path, db, zipName=None, versionPath=None, author=None):
 			authorVal = author
 		try : 
 			zn = zipName.replace("qDir-", "")
-			db.execute(query2, (pack, zn,version, authorVal))
-		except :
+			db.execute(query2, (pack.decode('utf-8'), zn.decode('utf-8'),version, authorVal.decode('utf-8')))
+		except Exception, e:
+			print "Insert failed: ",pack, zn, version, authorVal
+			print e
 			pass
 	pattern = re.compile("<[^>]+>")	
 	print data
@@ -112,18 +116,19 @@ def insertData(pack, path, db, zipName=None, versionPath=None, author=None):
 		title = entry["title"]
 		normalTitle = removeStopWords(title)
 		try :
-			db.execute(query, (pack, title, normalTitle,))
+			db.execute(query, (pack.decode('utf-8'), title, normalTitle,))
 		except Exception, e: 
 			print "error:", e
 			return
 		text = None
+		uPath = path.decode('utf-8')
 		if entry["type"] == "text"  : 
-			newPath = path+"/../"+entry["path"]
+			newPath = uPath+"/../"+entry["path"]
 			f = open(newPath)
 			text = f.read().strip()
 			f.close()
 		else : 
-			newPath = path+"/../"+entry["path"]+".dsc"
+			newPath = uPath+"/../"+ entry["path"]+".dsc"
 			try :
 				f = open(newPath)
 				text = f.read().strip()
@@ -135,7 +140,7 @@ def insertData(pack, path, db, zipName=None, versionPath=None, author=None):
 			text = pattern.sub(" ", text)
 			text = removeStopWords(text)
 			try :
-				db.execute(query, (pack, title, text,))
+				db.execute(query, (pack.decode('utf-8'), title, text,))
 			except Exception, e: 
 				print "error:", e
 				return

@@ -66,7 +66,8 @@ function verifyUser($userName, $password){
 }
 
 function preparePreview($title) {
-	$cmd = 'mkdir "../uploads/tmp/preview-'.$title.'"';
+	$t = str_replace('"', '\"', $title);
+	$cmd = 'mkdir "../uploads/tmp/preview-'.$t.'"';
 	exec($cmd);
 	$db = new MyDB('../uploads/search.db');
 	$query = "SELECT public,path FROM content WHERE pack == :id";
@@ -109,12 +110,13 @@ function preparePreview($title) {
 			}
 		}
 	} else {
+		$path = str_replace('"', '\"', $path);
 		$zipDir = $path;
 		if ($public == 0){
 			$zipDir = "qDir-".$zipDir;			
 		}
 		$zipDir = "../".$zipDir;
-		$cmd = 'unzip -d "../uploads/tmp/preview-'.$title.'" "'.$zipDir.'"';
+		$cmd = 'unzip -d "../uploads/tmp/preview-'.$t.'" "'.$zipDir.'"';
 		exec($cmd);
 		
 	}
@@ -122,7 +124,8 @@ function preparePreview($title) {
 }
 
 function removePreview($title){
-	$cmd = 'rm -rf "../uploads/tmp/preview-'.$title.'"';
+	$t = str_replace('"', '\"', $title);
+	$cmd = 'rm -rf "../uploads/tmp/preview-'.$t.'"';
 	exec($cmd);
 	return true;
 }
@@ -171,9 +174,10 @@ function deleteData($title, $isPublished){
 		));
 		$file_upload_response = $s3->batch()->send();
 	} else {
-		$cmd = 'rm -rf "../qDir-uploads/'.$title.'"';
+		$t = str_replace('"', '\"', $title);
+		$cmd = 'rm -rf "../qDir-uploads/'.$t.'"';
 		if ($isPublished)
-			$cmd = 'rm -rf "../uploads/'.$title.'"';
+			$cmd = 'rm -rf "../uploads/'.$t.'"';
 		exec($cmd);
 	}
 	return true;
@@ -218,7 +222,8 @@ function publishData($title){
 			'fileUpload' => '../uploads/search.db'
 		));
 	} else {
-		$cmd = 'mv  "../qDir-uploads/'.$title.'" "../uploads/'.$title.'"';
+		$t = str_replace('"', '\"', $title);
+		$cmd = 'mv  "../qDir-uploads/'.$t.'" "../uploads/'.$t.'"';
 		exec($cmd);
 	}
 	return true;
@@ -263,7 +268,8 @@ function unPublishData($title){
 			'fileUpload' => '../uploads/search.db'
 		));
 	} else {
-		$cmd = 'mv "../uploads/'.$title.'" "../qDir-uploads/'.$title.'" ';
+		$t = str_replace('"', '\"', $title);
+		$cmd = 'mv "../uploads/'.$t.'" "../qDir-uploads/'.$t.'" ';
 		exec($cmd);
 	}
 	return true;
