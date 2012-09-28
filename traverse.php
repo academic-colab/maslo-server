@@ -41,7 +41,8 @@ function traverseDir($dir) {
                $string = file_get_contents("$dir/$file/manifest");
 			   $json_data = json_decode($string, true);
 			   if (array_key_exists("filename", $json_data)) {
-			   $json_data["filename"] = "http://$callingURL/$dir/$file/".$json_data["filename"];
+				$urlEncFile = rawurlencode($file);
+			   $json_data["filename"] = "http://$callingURL/$dir/$urlEncFile/".$json_data["filename"];
 			   $string = json_encode($json_data);
 			   if ($started)
 			   		$all_json = $all_json .",". $string;

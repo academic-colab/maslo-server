@@ -223,8 +223,13 @@ function publishData($title){
 		));
 	} else {
 		$t = str_replace('"', '\"', $title);
-		$cmd = 'mv  "../qDir-uploads/'.$t.'" "../uploads/'.$t.'"';
-		exec($cmd);
+		$res = rename("../qDir-uploads/".$title, "../uploads/".$title);
+		if (!$res){
+			rename("../qDir-uploads/".$title."/contents.zip", "../uploads/".$title."/contents.zip");
+			rename("../qDir-uploads/".$title."/manifest", "../uploads/".$title."/manifest");
+			$cmd = 'rm -rf "../qDir-uploads/'.$t.'"';
+			exec($cmd);
+		}
 	}
 	return true;
 	}
@@ -269,8 +274,13 @@ function unPublishData($title){
 		));
 	} else {
 		$t = str_replace('"', '\"', $title);
-		$cmd = 'mv "../uploads/'.$t.'" "../qDir-uploads/'.$t.'" ';
-		exec($cmd);
+		$res = rename("../uploads/".$title, "../qDir-uploads/".$title);
+		if (!$res){
+			rename("../uploads/".$title."/contents.zip", "../qDir-uploads/".$title."/contents.zip");
+			rename("../uploads/".$title."/manifest", "../qDir-uploads/".$title."/manifest");
+			$cmd = 'rm -rf "../uploads/'.$t.'"';
+			exec($cmd);
+		}
 	}
 	return true;
 	}

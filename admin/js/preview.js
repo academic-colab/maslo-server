@@ -166,10 +166,8 @@ function renderPreview(baseDir, title, div){
 	loc = loc.replace("admin/overview.php","");	
 	loc = loc + baseDir;
 	var bLoc = loc;
-	loc = loc + title;
-	loc = loc.replace(/ /g, '%20')
-	loc = loc + "/manifest"
-	
+	loc = loc + escape(title);
+	loc = loc + "/manifest";
 	var manifest = readJSON(loc);	
 	if (manifest == null)
 		return false;
@@ -184,7 +182,7 @@ function renderPreview(baseDir, title, div){
 * Call render preview function and open popup
 */
 function doPreview(title){
-	var requestWhat = 'uploads/tmp/preview-'+title+'/';
+	var requestWhat = 'uploads/tmp/preview-'+escape(title)+'/';
 	var div = $("#dialog-preview");
 	renderPreview(requestWhat, title, div);
 	$( "#dialog-preview" ).dialog({
