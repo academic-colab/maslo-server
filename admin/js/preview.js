@@ -81,8 +81,10 @@ function readText(argPath) {
 function displayItem(div, item, bDir){
 	div.append("title: "+item.title + "<br/>");
 	div.append("type: "+item.type + "<br/>");
-	var descPath = bDir + item.path + ".dsc";
-	var path = bDir + item.path
+	var iPath = item.path;
+	iPath = iPath.replace(/\?/g, "%3F"); 
+	var descPath = bDir + iPath + ".dsc";
+	var path = bDir + iPath; 
 	if (item.type == "text"){
 		var data = readText(path);				
 		div.append("data: "+data + "<br/>");
@@ -138,8 +140,7 @@ function displayItem(div, item, bDir){
 		div.append("<br/><br/><hr/>");
 
 	} else if (item.type == "quiz"){
-		var loc = bDir + item.path + "/manifest";
-		loc = loc.replace(/ /g, '%20');
+		var loc = path + "/manifest";
 		var manifest = readJSON(loc);
 		
 		var i = 0;
@@ -166,7 +167,7 @@ function renderPreview(baseDir, title, div){
 	loc = loc.replace("admin/overview.php","");	
 	loc = loc + baseDir;
 	var bLoc = loc;
-	loc = loc + escape(title);
+	loc = loc + title.replace(/\?/g, "%3F"); 
 	loc = loc + "/manifest";
 	var manifest = readJSON(loc);	
 	if (manifest == null)
@@ -182,7 +183,7 @@ function renderPreview(baseDir, title, div){
 * Call render preview function and open popup
 */
 function doPreview(title){
-	var requestWhat = 'uploads/tmp/preview-'+escape(title)+'/';
+	var requestWhat = 'uploads/tmp/preview-'+title.replace(/\?/g, "%3F")+'/';
 	var div = $("#dialog-preview");
 	renderPreview(requestWhat, title, div);
 	$( "#dialog-preview" ).dialog({
