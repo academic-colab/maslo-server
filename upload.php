@@ -112,6 +112,7 @@ function createManifest($title, $path, $zipPath, $manifestPath){
 	$versionStream = file_get_contents($manifestPath."/version");
 	$versionData = json_decode($versionStream, true);
 	$version = $versionData["version"];
+
 	$today = date("Y-m-d");  
 	$data = '{"title": "'.str_replace('"', '\"', $title).'", "filename":"'.str_replace('"', '\"', $zipPath).'", "course":"", "date":"'.$today.'", "version":"'.$version.'", "size":"'.$_SESSION["packSize"].'"}';
 	$fname = str_replace("\ ", " ", $path);

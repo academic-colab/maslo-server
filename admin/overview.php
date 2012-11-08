@@ -48,6 +48,13 @@ session_start();
 	<link type="text/css" href="css/maslo-theme/jquery-ui-1.8.16.custom.css" rel="stylesheet" /> 
 	<link type="text/css" href="css/foundation.css" rel="stylesheet" />
 	<link type="text/css" href="css/screen.css" rel="stylesheet" />
+	<link rel="stylesheet" href="css/tincan/TinCanViewer.css">
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+    	google.load("jquery", "1.6.4");
+	</script>
+	<script src="scripts/TinCanViewer.js"></script>
+	<script src="scripts/prototypeConfig.js"></script>
 	<title>MASLO Web Admin Console</title>
 </head>
 <body>
@@ -57,6 +64,7 @@ session_start();
 		echo '<ul>
 				<li><a href="#packs" id="packsClick">Content Pack Management</a></li>
 				<li><a href="#users" id="usersClick">User Management</a></li>
+				<li><a href="#tincan" id="usersClick">TinCan Events</a></li>
 			</ul>';
 	?>
 	
@@ -82,7 +90,22 @@ session_start();
 				
 	</header>
 
-	<div id="edit" class="ui-tabs">			
+	<div id="edit" class="ui-tabs">		
+		<div id="tincan"  class="ui-tabs">
+		<?php
+		/* If user has authenticated session, query all exisiting users and their roles. Display them in
+		 	tincan tab 
+		*/
+		if (isset($_SESSION['user'])) {
+			echo "Click on a statement to see the raw statement data.";
+			echo "<br/><br/>";
+		
+			echo "<button id='refreshStatements'>Refresh</button>";
+			echo "<div id='theStatements'></div>";
+			echo "<button id='showAllStatements'>Show All</button>";
+		}
+		?>
+		</div>	
 		<div id="users"  class="ui-tabs">
 			<?php
 			/* If user has authenticated session, query all exisiting users and their roles. Display them in
@@ -154,6 +177,7 @@ session_start();
 					<th class="big">Size</th>
 					<?php
 					if (isset($_SESSION['user'])){
+						echo "<th>TinCan Status</th>";
 						echo "<th>Location</th>";
 						echo "<th>Published</th>";
 						echo "<th>Remove</th>";
@@ -178,7 +202,7 @@ session_start();
 				$json = $json["data"];
 				
 				$db = new MyDB('../uploads/search.db');
-				$query = "SELECT version, author, public FROM content where pack == :id";
+				$query = "SELECT version, author, public, tincan FROM content where pack == :id";
 				$j = 0;
 				while ($j < 2) {
 				$i = 0;
@@ -194,6 +218,14 @@ session_start();
 						$author = $resultRows["author"];
 						$version = $resultRows["version"];
 						$published =  $resultRows["public"];
+						$tincan = "n/a";
+						if (array_key_exists("tincan", $resultRows)){
+							$tc = $resultRows["tincan"];
+							if ($tc == 1)
+								$tincan = "quiz only";
+							if ($tc == 2)
+								$tincan = "all";
+						}
 					}
 					$size = "N/A";
 					if (array_key_exists("size", $json[$i]))
@@ -210,6 +242,7 @@ session_start();
 					echo "<td>".$author."</td>";
 					echo "<td>".$size."</td>";
 					if (isset($_SESSION['user'])) {
+						echo '<td>'.$tincan.'</td>';
 						$loc = "Local";
 						if ($s3Config["wantS3"] == "true") {
 							$loc = "S3";

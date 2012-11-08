@@ -298,13 +298,24 @@ function initSearchDB($checkUpdate){
 	if ($stmt){
 		$query = "SELECT public FROM content";
 		$stmt = $db->prepare($query);
+		if (!$stmt){			
+			$query = "ALTER TABLE content ADD public int DEFAULT 0";
+			$db->exec($query);
+			$query = "UPDATE content SET public=1 WHERE public=0";
+			$db->exec($query);
+			
+			$cmd = "mkdir ../uploads/tmp";
+			exec($cmd);
+		}		
+		$query = "SELECT tincan FROM content";
+		$stmt = $db->prepare($query);
 		if ($stmt){
 			$db->closeDB();
 			return true;
 		} else {
-			$query = "ALTER TABLE content ADD public int DEFAULT 0";
+			$query = "ALTER TABLE content ADD tincan int DEFAULT 0";
 			$db->exec($query);
-			$query = "UPDATE content SET public=1 WHERE public=0";
+			$query = "UPDATE content SET tincan=0";
 			$db->exec($query);
 		}
 		
@@ -379,7 +390,7 @@ function initDBs(){
 	} 
 	$db->closeDB();
 	$cmd = "mkdir ../uploads";
-	exec($cmd);
+	exec($cmd);	
 	$cmd = "mkdir ../qDir-uploads";
 	exec($cmd);
 	initSearchDB(false);
