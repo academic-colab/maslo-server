@@ -219,13 +219,11 @@ session_start();
 						$version = $resultRows["version"];
 						$published =  $resultRows["public"];
 						$tincan = "n/a";
-						if (array_key_exists("tincan", $resultRows)){
-							$tc = $resultRows["tincan"];
-							if ($tc == 1)
-								$tincan = "quiz only";
-							if ($tc == 2)
-								$tincan = "all";
-						}
+						$tc = $resultRows["tincan"];
+						if ($tc == 1)
+							$tincan = "quiz only";
+						if ($tc == 2)
+							$tincan = "all";
 					}
 					$size = "N/A";
 					if (array_key_exists("size", $json[$i]))
