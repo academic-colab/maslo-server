@@ -78,15 +78,17 @@ function readText(argPath) {
 /*** 
 * Display an item during preview
 */
-function displayItem(div, item, bDir){
+function displayItem(div, item, bDir, title){
 	div.append("title: "+item.title + "<br/>");
 	div.append("type: "+item.type + "<br/>");
 	var iPath = item.path;
-	iPath = iPath.replace(/\?/g, "%3F"); 
+	//iPath = iPath.replace(/\?/g, "%3F"); 
 	var descPath = bDir + iPath + ".dsc";
+	descPath = descPath.replace(title, encodeURIComponent(title));
 	var path = bDir + iPath; 
 	if (item.type == "text"){
-		var data = readText(path);				
+		var dPath = path.replace(title, encodeURIComponent(title));
+		var data = readText(dPath);				
 		div.append("data: "+data + "<br/>");
 		div.append("<hr><br/>");
 	} else if (item.type == "image") {
@@ -120,17 +122,18 @@ function displayItem(div, item, bDir){
 			div.append("question media: <br/>");
 			var j = 0;
 			while (j < item.attachments.length){
-				displayItem(div, item.attachments[j], bDir);
+				displayItem(div, item.attachments[j], bDir, title);
 				j++;
 			}
 		}
 		div.append("question answers: <br/>");
-		var answerData = readJSON(path);
+		var aPath = path.replace(title, encodeURIComponent(title));
+		var answerData = readJSON(aPath);
 		var j =0;
 		while (j < answerData.length){
 			div.append("answer "+(j+1)+": "+answerData[j].text + "<br/>");
 			div.append("  feedback: "+answerData[j].feedback + "<br/>");
-			if ("checked" in answerData[j]) {
+			if ("correct" in answerData[j] && answerData[j].correct == "checked") {
 				div.append("correct.<br/>");
 			} else {
 				div.append("wrong.<br/>");
@@ -141,11 +144,16 @@ function displayItem(div, item, bDir){
 
 	} else if (item.type == "quiz"){
 		var loc = path + "/manifest";
+		loc = loc.replace(title, encodeURIComponent(title));
 		var manifest = readJSON(loc);
+		if (manifest == null){
+			div.append("No Quiz manifest! This likely means that no questions were specified for this quiz. <br/><hr/>");
+			return false;
+		}
 		
 		var i = 0;
 		while (i< manifest.length) {
-			displayItem(div, manifest[i], bDir);
+			displayItem(div, manifest[i], bDir, title);
 			i++;
 		}
 	
@@ -167,14 +175,15 @@ function renderPreview(baseDir, title, div){
 	loc = loc.replace("admin/overview.php","");	
 	loc = loc + baseDir;
 	var bLoc = loc;
-	loc = loc + title.replace(/\?/g, "%3F"); 
+	loc = loc + encodeURIComponent(title); //title.replace(/\?/g, "%3F"); 
 	loc = loc + "/manifest";
 	var manifest = readJSON(loc);	
-	if (manifest == null)
+	if (manifest == null){
 		return false;
+	}
 	var i = 0;
 	while (i< manifest.length) {
-		displayItem(div, manifest[i], bLoc);
+		displayItem(div, manifest[i], bLoc, title);
 		i++;
 	}
 }
@@ -183,7 +192,8 @@ function renderPreview(baseDir, title, div){
 * Call render preview function and open popup
 */
 function doPreview(title){
-	var requestWhat = 'uploads/tmp/preview-'+title.replace(/\?/g, "%3F")+'/';
+	//var requestWhat = 'uploads/tmp/preview-'+title.replace(/\?/g, "%3F")+'/';
+	var requestWhat = 'uploads/tmp/preview-'+encodeURIComponent(title)+'/';
 	var div = $("#dialog-preview");
 	renderPreview(requestWhat, title, div);
 	$( "#dialog-preview" ).dialog({

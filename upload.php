@@ -70,14 +70,14 @@ function doUnzip($fileName, $folderName, $destination){
 	
 	$cmd = "ls $destination";
 	$io = popen($cmd, "r");
-	$dirName = fgets($io, 4096);	
-	$encTitle = trim($dirName);
+	$encTitle = "contents.zip";
+	while ($encTitle == "contents.zip") {
+		$dirName = fgets($io, 4096);	
+		$encTitle = trim($dirName);
+	}
 	pclose ( $io );
 
 	$packTitle = $_POST['dirName'];
-	/*$encTitle = urlencode($packTitle);
-	$encTitle = str_replace('+', '%20', $encTitle);
-	$encTitle = str_replace('%27', "'", $encTitle);*/
 	if ($encTitle != $packTitle){
 		rename($destination.'/'.$encTitle, $destination.'/'.$packTitle);
 	}
