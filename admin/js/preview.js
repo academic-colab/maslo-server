@@ -23,6 +23,21 @@
  *  @author Cathrin Weiss (cathrin.weiss@uwex.edu)
  */
 
+function doEncode(input){
+	var  result = "";
+	for (var i = 0; i < input.length; i++){
+		var uri = encodeURIComponent(input[i]);
+		var esc = escape(input[i]);
+		if (uri == esc)
+			result += uri;
+		else if (uri == input[i])
+			result += esc;
+		else 
+			result += uri;
+	}
+	return result;
+}
+
 /***
  * Read a json file, return the resulting object
  * argPath: the path
