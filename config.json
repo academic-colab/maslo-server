@@ -1,4 +1,5 @@
 {
+"wantDirectPublish":"true",
 "wantS3":"false",
 "bucket":"my-bucket-name",
 "baseDir":"my-common-prefix"

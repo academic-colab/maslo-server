@@ -66,7 +66,7 @@ function verifyUser($userName, $password){
 }
 
 function preparePreview($title) {
-	$t = str_replace('"', '\"', $title);
+	$t = str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title)));
 	$cmd = 'mkdir "../uploads/tmp/preview-'.$t.'"';
 	exec($cmd);
 	$db = new MyDB('../uploads/search.db');
@@ -110,7 +110,7 @@ function preparePreview($title) {
 			}
 		}
 	} else {
-		$path = str_replace('"', '\"', $path);
+		$path = str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $path)));
 		$zipDir = $path;
 		if ($public == 0){
 			$zipDir = "qDir-".$zipDir;			
@@ -124,7 +124,7 @@ function preparePreview($title) {
 }
 
 function removePreview($title){
-	$t = str_replace('"', '\"', $title);
+	$t = str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title)));
 	$cmd = 'rm -rf "../uploads/tmp/preview-'.$t.'"';
 	exec($cmd);
 	return true;
@@ -174,7 +174,7 @@ function deleteData($title, $isPublished){
 		));
 		$file_upload_response = $s3->batch()->send();
 	} else {
-		$t = str_replace('"', '\"', $title);
+		$t = str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title)));
 		$cmd = 'rm -rf "../qDir-uploads/'.$t.'"';
 		if ($isPublished)
 			$cmd = 'rm -rf "../uploads/'.$t.'"';
@@ -222,7 +222,7 @@ function publishData($title){
 			'fileUpload' => '../uploads/search.db'
 		));
 	} else {
-		$t = str_replace('"', '\"', $title);
+		$t = str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title)));
 		$res = rename("../qDir-uploads/".$title, "../uploads/".$title);
 		if (!$res){
 			rename("../qDir-uploads/".$title."/contents.zip", "../uploads/".$title."/contents.zip");
@@ -273,7 +273,7 @@ function unPublishData($title){
 			'fileUpload' => '../uploads/search.db'
 		));
 	} else {
-		$t = str_replace('"', '\"', $title);
+		$t = str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title)));
 		$res = rename("../uploads/".$title, "../qDir-uploads/".$title);
 		if (!$res){
 			rename("../uploads/".$title."/contents.zip", "../qDir-uploads/".$title."/contents.zip");

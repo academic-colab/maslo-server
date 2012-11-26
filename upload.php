@@ -48,10 +48,10 @@ session_start();
  */
 function runFTS($path, $name, $globalPath, $zipName, $pathToVersion){
 	$userName = $_POST['userName'];
-	$stripPath = str_replace('"', '\"',$path);
-	$stripVPath = str_replace('"', '\"',$pathToVersion);
-	$zName = str_replace('"', '\"',$zipName);
-	$stripName = str_replace('"', '\"',$name);
+	$stripPath = str_replace('`', '\`',str_replace('"', '\"',$path));
+	$stripVPath = str_replace('"', '\"',str_replace('`', '\`',$pathToVersion));
+	$zName = str_replace('"', '\"',str_replace('`', '\`',$zipName));
+	$stripName = str_replace('"', '\"',str_replace('`', '\`',$name));
 	$cmd = 'python FTS.py "'.$stripPath.'" "'.$stripName.'" "'.$globalPath.'" "'.$zName.'" "'.$stripVPath.'" "'.$userName.'" >> FTS.out 2>&1';
 	
 	exec($cmd);
@@ -95,6 +95,8 @@ function doUnzip($fileName, $folderName, $destination){
  */
 function addSearchDB($zipName, $folder, $sessionLocation){
 	$f = str_replace('"', '\"', $folder);
+	$f = str_replace('`', '\`', $f);
+	$f = str_replace('´', '\´', $f);
 	$cmd = 'sh doZip.sh "'.addslashes($sessionLocation).'" "'.addslashes($zipName).'" "'.$f.'"';
 	exec($cmd);
 	return false;
@@ -114,7 +116,7 @@ function createManifest($title, $path, $zipPath, $manifestPath){
 	$version = $versionData["version"];
 
 	$today = date("Y-m-d");  
-	$data = '{"title": "'.str_replace('"', '\"', $title).'", "filename":"'.str_replace('"', '\"', $zipPath).'", "course":"", "date":"'.$today.'", "version":"'.$version.'", "size":"'.$_SESSION["packSize"].'"}';
+	$data = '{"title": "'.str_replace('"', '\"', $title).'", "filename":"'.str_replace('"', '\"', str_replace('`', '\`', $zipPath)).'", "course":"", "date":"'.$today.'", "version":"'.$version.'", "size":"'.$_SESSION["packSize"].'"}';
 	$fname = str_replace("\ ", " ", $path);
 	$fname =  $fname."manifest";
 	$file = fopen($fname, "w");
@@ -181,6 +183,58 @@ function checkForPackExist($packName){
 	return true;
 }
 
+/*** 
+ * Publish content pack
+ * $title: Content pack title
+ * returns: true, if pack successfully published, false otherwise
+ */
+function publishData($title){
+	if (isset($_SESSION['init'])){
+	$db = new MyDB('uploads/search.db');
+	$query = "UPDATE content SET public = 1 where pack == :id";
+	$stmt = $db->prepare($query);
+	if ($stmt){
+		$stmt->bindValue(':id', $title, SQLITE3_TEXT);
+		$stmt->execute();
+	}
+	$db->closeDB();
+	$s3ConfigStream = file_get_contents("config.json");
+	$s3Config = json_decode($s3ConfigStream, true);
+	$bucket = $s3Config["bucket"];
+	$baseDir = $s3Config["baseDir"]."/";
+	if ($s3Config["wantS3"] == "true"){
+		$oldFn = 'qDir-'.$baseDir.$title;
+		$newFn = $baseDir.$title;
+		$s3 = new AmazonS3();
+		$response = $s3->get_object_list($bucket, array(
+		   'prefix' => $oldFn
+		));
+		foreach ($response as $v) {
+			$v2 = str_replace($oldFn, "", $v);
+			$s3->copy_object(array('bucket' => $bucket, 'filename' => $oldFn.$v2), array('bucket' => $bucket, 'filename' => $newFn.$v2),array('acl'  => AmazonS3::ACL_PUBLIC));
+			$s3->batch()->delete_object($bucket, $v);
+		}			
+				
+		$file_upload_response = $s3->batch()->send();		
+		$s3->create_object($bucket, $baseDir."search.db", array(
+			'fileUpload' => 'uploads/search.db'
+		));
+	} else {
+		$t = str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title)));
+		$res = rename("qDir-uploads/".$title, "uploads/".$title);
+		if (!$res){
+			rename("qDir-uploads/".$title."/contents.zip", "uploads/".$title."/contents.zip");
+			rename("qDir-uploads/".$title."/manifest", "uploads/".$title."/manifest");
+			$cmd = 'rm -rf "qDir-uploads/'.$t.'"';
+			exec($cmd);
+		}
+	}
+	return true;
+	}
+	return false;
+}
+
+
 /***
 * Handler function for content pack upload
 * Handles each individual step, once all zip chunks are successfully uploaded,
@@ -242,7 +296,7 @@ function receiveUpload(){
 		$plainDir = $sessionLocation.str_replace(" ", "\ ", $plainDir);
 		
 		$res = doUnzip($zipFileName, $folderName, $sessionLocation);
-		$cmd = 'du -hs "'.$sessionLocation.str_replace('"', '\"',$folderName).'"';
+		$cmd = 'du -hs "'.$sessionLocation.str_replace('"', '\"',str_replace('`', '\`',$folderName)).'"';
 
 		$io = popen($cmd, "r");
 		$size = fgets($io, 4096);	
@@ -291,6 +345,9 @@ function receiveUpload(){
 			} catch (Exception $e){
 
 			}
+		}
+		if ($s3Config["wantDirectPublish"] == "true") {
+			publishData($packTitle);
 		}
 		session_unset();
 		session_destroy();
