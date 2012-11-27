@@ -230,10 +230,12 @@ session_start();
 						$size = $json[$i]["size"];
 					
 					echo "<tr>";
+					$title = $json[$i]["title"];
+					$title = str_replace(">","&gt;", str_replace("<","&lt;", $title ) );
 					if ($published == 0 && isset($_SESSION['user'])){
-						echo "<td><a href='#' onclick='prepPreview($(this).text());'>".$json[$i]["title"]."</a></td>";
+						echo "<td><a href='#' onclick='prepPreview($(this).text());'>".$title."</a></td>";
 					} else {					
-						echo "<td>".$json[$i]["title"]."</td>";
+						echo "<td>".$title."</td>";
 					}
 					echo "<td>".$version."</td>";
 					echo "<td>".$json[$i]["date"]."</td>";
@@ -359,8 +361,8 @@ $(document).ready(function() {
 		if (aTag.length == 0)
 			aTag = tdTag;
 		var title = aTag.text();
-		
-		$("#pub-pack").html(title);
+		var titleOld = aTag.html();
+		$("#pub-pack").html(titleOld);
 		var sendData = title.replace(/ /g, ":::");
 		var checkbox = $(this);
 		if ($(this).is(":checked")) {
@@ -380,7 +382,7 @@ $(document).ready(function() {
 							dataType: "text",
 							data: sendData,
 						  success: function(data) {
-							tdTag.html(title);
+							tdTag.html(titleOld);
 							return false;
 						  },
 						error: function(data) {
@@ -413,7 +415,7 @@ $(document).ready(function() {
 							dataType: "text",
 							data: sendData,
 						  success: function(data) {
-							linkTag = $('<a href="#">'+title+'</a>');
+							linkTag = $('<a href="#">'+titleOld+'</a>');
 							linkTag.click(function(e){
 								prepPreview(title);
 								return false;
@@ -483,7 +485,9 @@ $(document).ready(function() {
 		if (aTag.length == 0)
 			aTag = $(elt.children()[0]);
 		var title = aTag.text();
-		$("#condemned").text("content pack '"+title+"'");
+		var titleOld = aTag.html();
+
+		$("#condemned").html("content pack '"+titleOld+"'");
 		var sendData = title;
 		var isPublished = $(elt).find(".checkPub");
 		isPublished = ($(isPublished).is(":checked")) ? "true" : "false";
