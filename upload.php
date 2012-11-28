@@ -27,6 +27,7 @@
 //header('Content-Type: text/html; charset=utf-8'); 
 date_default_timezone_set('America/Chicago');
 require_once 's3sdk/sdk.class.php';
+putenv("LANG=en_US.UTF-8");
 
 class MyDB extends SQLite3
 {
@@ -431,3 +432,4 @@ if (array_key_exists("handshake", $_POST)){
 }
 
 ?>
+
