@@ -25,6 +25,7 @@
  */
 require_once '../s3sdk/sdk.class.php';
 require_once '../traverse.php';
+putenv("LANG=en_US.UTF-8");
 header('Content-Type: text/html; charset=utf-8'); 
 
 class MyDB extends SQLite3

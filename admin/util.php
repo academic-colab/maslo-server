@@ -24,6 +24,7 @@
  *  @author Cathrin Weiss (cathrin.weiss@uwex.edu)
  */
 require_once '../s3sdk/sdk.class.php';
+putenv("LANG=en_US.UTF-8");
 
 class MyDB extends SQLite3
 {
