@@ -115,18 +115,18 @@ function displayItem(div, item, bDir, title){
 		div.append("description: "+data + "<br/>");
 		div.append("<hr><br/>");
 	} else if (item.type == "video") {
-			var video = '<video src="'+path+'"   controls >\
-	        </video><p/>';
-			var aTag = '<a href="'+ip+'" target="_blank">Click here</a> in case video does not display inline<br/>'
+			var video = "<video src='"+ip+"'   controls >\
+	        </video><p/>";
+			var aTag = "<a href='"+ip+"' target='_blank'>Click here</a> in case video does not display inline<br/>";
 			div.append(video);
 			div.append(aTag);
 			data = readText(descPath);
 			div.append("description: "+data + "<br/>");
 			div.append("<hr><br/>");
 	} else if (item.type == "audio") {
-			var audio = '<audio src="'+ip+'"   controls >\
-			</audio><p/>';
-			var aTag = '<a href="'+path+'" target="_blank">Click here</a> in case audio does not play inline<br/>'
+			var audio = "<audio src='"+ip+"'   controls >\
+			</audio><p/>";
+			var aTag = "<a href='"+ip+"' target='_blank'>Click here</a> in case audio does not display inline<br/>";
 			div.append(audio);
 			div.append(aTag);
 			data = readText(descPath);
