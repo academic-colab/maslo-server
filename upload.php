@@ -149,27 +149,29 @@ function checkForPackExist($packName){
 	$stmt = $db->prepare($query);		
 	if (!$stmt){
 		$db->closeDB();
-		return false;
+		return -1;
 	}
 	$result = $stmt->execute();
 	$resultRows = $result->fetchArray(SQLITE3_ASSOC);
 	$cnt = $resultRows["count"];
 	if (intval($cnt) == 0) {
 		$db->closeDB();
-		return false;	
+		return -1;	
 	}
 	
-	$query = "SELECT count(*) as count FROM content where pack == :id";	
+	$query = "SELECT count(*) as count, public FROM content where pack == :id";	
 	$stmt = $db->prepare($query);		
 	if (!$stmt){
 		$db->closeDB();
-		return false;
+		return -1;
 	}
 	$stmt->bindValue(':id', $packName, SQLITE3_TEXT);
 	$result = $stmt->execute();
 	$resultRows = $result->fetchArray(SQLITE3_ASSOC);
 	$cnt = $resultRows["count"];
+	$pub = -1;
 	if (intval($cnt) > 0) {
+		$pub = $resultRows["public"];
 		$query = "DELETE FROM content where pack == :id";
 		$stmt = $db->prepare($query);
 		$stmt->bindValue(':id', $packName, SQLITE3_TEXT);
@@ -181,7 +183,7 @@ function checkForPackExist($packName){
 	}
 	
 	$db->closeDB();
-	return true;
+	return $pub;
 }
 
 /*** 
@@ -309,7 +311,7 @@ function receiveUpload(){
 		$packTitle = $_POST['packTitle'];		
 		$zipFileName = $sessionLocation.$zipName;
 		
-		checkForPackExist($packTitle);	
+		$wasPublished = checkForPackExist($packTitle);	
 		
 		runFTS($sessionLocation.$folderName, $packTitle, $searchLocation, $mainLocation.$folderName.$zipName, $unchanged."/version");
 		
@@ -347,7 +349,7 @@ function receiveUpload(){
 
 			}
 		}
-		if ($s3Config["wantDirectPublish"] == "true") {
+		if ($s3Config["wantDirectPublish"] == "true" && $wasPublished != 0) {
 			publishData($packTitle);
 		}
 		session_unset();
