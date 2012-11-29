@@ -101,27 +101,30 @@ function displayItem(div, item, bDir, title){
 	var descPath = bDir + iPath + ".dsc";
 	descPath = descPath.replace(title, encodeURIComponent(title));
 	var path = bDir + iPath; 
+	var ip = path.replace(title, encodeURIComponent(title));
+	ip = ip.replace(/\'/g, escape("\'"));
 	if (item.type == "text"){
 		var dPath = path.replace(title, encodeURIComponent(title));
 		var data = readText(dPath);				
 		div.append("data: "+data + "<br/>");
 		div.append("<hr><br/>");
 	} else if (item.type == "image") {
-		div.append("<img src='"+path+"'></img><br/>");
+		
+		div.append("<img src='"+ip+"'></img><br/>");
 		data = readText(descPath);
 		div.append("description: "+data + "<br/>");
 		div.append("<hr><br/>");
 	} else if (item.type == "video") {
 			var video = '<video src="'+path+'"   controls >\
 	        </video><p/>';
-			var aTag = '<a href="'+path+'" target="_blank">Click here</a> in case video does not display inline<br/>'
+			var aTag = '<a href="'+ip+'" target="_blank">Click here</a> in case video does not display inline<br/>'
 			div.append(video);
 			div.append(aTag);
 			data = readText(descPath);
 			div.append("description: "+data + "<br/>");
 			div.append("<hr><br/>");
 	} else if (item.type == "audio") {
-			var audio = '<audio src="'+path+'"   controls >\
+			var audio = '<audio src="'+ip+'"   controls >\
 			</audio><p/>';
 			var aTag = '<a href="'+path+'" target="_blank">Click here</a> in case audio does not play inline<br/>'
 			div.append(audio);
