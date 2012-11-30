@@ -44,10 +44,8 @@ function doEncode(input){
  * return: object
  */
 function readJSON(argPath) {
-    var fPath = argPath;
-    if (argPath == null) {
-        fPath = globalPack+"/manifest"; 
-    }
+	var d = new Date();
+    var fPath = argPath + "?"+d.getTime();
     var json = null;
     $.ajax({
            'async': false,
@@ -56,7 +54,7 @@ function readJSON(argPath) {
            'dataType': "json",
            'timeout':2000,
            'success': function (data) {
-           json = data;
+			 json = data;
            },
            error: function (data) {
            json = null;
@@ -72,7 +70,8 @@ function readJSON(argPath) {
  * return: object
  */
 function readText(argPath) {
-    var fPath = argPath;
+	var d = new Date();
+    var fPath = argPath+ "?"+d.getTime();
     var json = null;
     $.ajax({
            'async': false,
@@ -164,10 +163,10 @@ function displayItem(div, item, bDir, title){
 		var loc = path + "/manifest";
 		loc = loc.replace(title, encodeURIComponent(title));
 		var manifest = readJSON(loc);
-		if (manifest == null){
+		if (manifest == null || manifest.length == 0){
 			div.append("No Quiz manifest! This likely means that no questions were specified for this quiz. <br/><hr/>");
 			return false;
-		}
+		} 
 		
 		var i = 0;
 		while (i< manifest.length) {
@@ -193,10 +192,11 @@ function renderPreview(baseDir, title, div){
 	loc = loc.replace("admin/overview.php","");	
 	loc = loc + baseDir;
 	var bLoc = loc;
-	loc = loc + encodeURIComponent(title); //title.replace(/\?/g, "%3F"); 
-	loc = loc + "/manifest";
+	loc = loc + encodeURIComponent(title); 
+	var d = new Date();
+	loc = loc + "/manifest?" + d.getTime();
 	var manifest = readJSON(loc);	
-	if (manifest == null){
+	if (manifest == null || manifest.length == 0){
 		return false;
 	}
 	var i = 0;
@@ -210,7 +210,6 @@ function renderPreview(baseDir, title, div){
 * Call render preview function and open popup
 */
 function doPreview(title){
-	//var requestWhat = 'uploads/tmp/preview-'+title.replace(/\?/g, "%3F")+'/';
 	var requestWhat = 'uploads/tmp/preview-'+encodeURIComponent(title)+'/';
 	var div = $("#dialog-preview");
 	renderPreview(requestWhat, title, div);
