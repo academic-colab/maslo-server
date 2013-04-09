@@ -115,8 +115,11 @@ function createManifest($title, $path, $zipPath, $manifestPath){
 	$versionStream = file_get_contents($manifestPath."/version");
 	$versionData = json_decode($versionStream, true);
 	$version = $versionData["version"];
+	$category = "";
+	if (array_key_exists("category", $versionData))
+		$category = $versionData["category"];
 	$today = date("Y-m-d");  
-	$data = '{"title": "'.str_replace('"', '\"', $title).'", "filename":"'.str_replace('"', '\"', str_replace('`', '\`', $zipPath)).'", "course":"", "date":"'.$today.'", "version":"'.$version.'", "size":"'.$_SESSION["packSize"].'"}';
+	$data = '{"title": "'.str_replace('"', '\"', $title).'", "filename":"'.str_replace('"', '\"', str_replace('`', '\`', $zipPath)).'", "course":"", "date":"'.$today.'", "version":"'.$version.'", "size":"'.$_SESSION["packSize"].'", "category":"'.$category.'"}';
 	$fname = str_replace("\ ", " ", $path);
 	$fname =  $fname."manifest";
 	$file = fopen($fname, "w");

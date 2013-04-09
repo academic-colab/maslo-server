@@ -79,7 +79,7 @@ def createTable(db):
 
 ## Create basic content pack table		
 def createTableUpper(db):
-	statement = "CREATE TABLE content (pack text, path text, version text, author text, public int DEFAULT 0);"
+	statement = "CREATE TABLE content (pack text, path text, version text, author text, public int DEFAULT 0, category text);"
 	try :
 		db.execute(statement)
 		db.commit()
@@ -92,19 +92,22 @@ def createTableUpper(db):
 def insertData(pack, path, db, zipName=None, versionPath=None, author=None):
 	data = getJSON(path)
 	query = "INSERT INTO content_search(pack, section, content) VALUES (?,?,?)"
-	query2 = "INSERT INTO content(pack, path, version, author) VALUES (?,?,?,?)"
+	query2 = "INSERT INTO content(pack, path, version, author, category) VALUES (?,?,?,?,?)"
 	if zipName :
 		version = "0"
+		category = ""
 		authorVal = ""
 		if versionPath is not None and author is not None : 
 			print versionPath
 			versionData = getJSON(versionPath, False)
 			if versionData and "version" in versionData : 
 				version = versionData["version"]
+			if versionData and "category" in versionData :
+				category = versionData["category"]
 			authorVal = author
 		try : 
 			zn = zipName.replace("qDir-", "")
-			db.execute(query2, (pack.decode('utf-8'), zn.decode('utf-8'),version, authorVal.decode('utf-8')))
+			db.execute(query2, (pack.decode('utf-8'), zn.decode('utf-8'),version, authorVal.decode('utf-8'), category))
 		except Exception, e:
 			print "Insert failed: ",pack, zn, version, authorVal
 			print e

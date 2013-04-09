@@ -149,13 +149,14 @@ session_start();
 			<thead>
 				<tr>
 					<th class="big">Title</th>
+					<th class="big">Category</th>
 					<th class="big">Version</th>
-					<th class="big">Last Modified</th>
-					<th class="big">Uploaded by</th>
+					<th class="big">Last Modified</th>					
 					<th class="big">Size</th>
 					<?php
 					if (isset($_SESSION['user'])){
 						echo "<th>Location</th>";
+						echo "<th class=\"big\">Uploaded by</th>";
 						echo "<th>Published</th>";
 						echo "<th>Remove</th>";
 					}
@@ -179,7 +180,7 @@ session_start();
 				$json = $json["data"];
 				
 				$db = new MyDB('../uploads/search.db');
-				$query = "SELECT version, author, public FROM content where pack == :id";
+				$query = "SELECT version, author, public, category FROM content where pack == :id";
 				$j = 0;
 				while ($j < 2) {
 				$i = 0;
@@ -195,6 +196,7 @@ session_start();
 						$author = $resultRows["author"];
 						$version = $resultRows["version"];
 						$published =  $resultRows["public"];
+						$category = $resultRows["category"];
 					}
 					$size = "N/A";
 					if (array_key_exists("size", $json[$i]))
@@ -203,25 +205,27 @@ session_start();
 					echo "<tr>";
 					$title = $json[$i]["title"];
 					$title = str_replace(">","&gt;", str_replace("<","&lt;", $title ) );
-					if ($published == 0 && isset($_SESSION['user'])){
-						echo "<td><a href='#' onclick='prepPreview($(this).text());'>".$title."</a></td>";
-					} else {					
-						echo "<td>".$title."</td>";
+						
+					echo "<td><a href='#' onclick='prepPreview($(this).text());'>".$title."</a></td>";
+					if (isset($_SESSION['user'])) {
+						echo "<td class='packCategory' onClick='getCategories();return false;'>".$category."</td>";
+					} else {
+						echo "<td class='packCategory'>".$category."</td>";
 					}
 					echo "<td>".$version."</td>";
-					echo "<td>".$json[$i]["date"]."</td>";
-					echo "<td>".$author."</td>";
+					echo "<td>".$json[$i]["date"]."</td>";					
 					echo "<td>".$size."</td>";
-					if (isset($_SESSION['user'])) {
+					if (isset($_SESSION['user'])) {						
 						$loc = "Local";
 						if ($s3Config["wantS3"] == "true") {
 							$loc = "S3";
 						}
 						echo '<td>'.$loc.'</td>';
+						echo "<td>".$author."</td>";
 						if ($published == 1)
-							echo '<td><input type="checkbox" class="checkPub" checked="checked"></input></td>';
+							echo '<td class="icon"><input type="checkbox" class="checkPub" checked="checked"></input></td>';
 						else 
-							echo '<td><input type="checkbox"  class="checkPub"></input></td>';	
+							echo '<td class="icon"><input type="checkbox"  class="checkPub"></input></td>';	
 						echo '<td class="icon"><img class="remove" src="images/remove.png" alt="Remove Item" /></td>';
 					}
 					$i = $i+1;
@@ -302,6 +306,12 @@ session_start();
 		</table>
 		</form>
 		*required
+	</div>
+	<div id="category-edit" style="display: none" title="Adding/Editing MASLO Categories">				
+	</div>
+	<div id="name-edit" style="display: none" title="Editing Name">				
+		<input type="text" id="cat-name"></input>
+		<input type="hidden" id="catMaxId" value="0"></input>
 	</div>
 	
 </body>

@@ -294,14 +294,24 @@ function unPublishData($title){
 function initSearchDB($checkUpdate){
 	$db = new MyDB('../uploads/search.db');
 	$query = "SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='content'";
-	
+	if (!file_exists("../uploads/categories.txt")){
+		$s = '{"categories":[]}';
+		file_put_contents("../uploads/categories.txt", $s);
+	}
 	$stmt = $db->prepare($query);
 	if ($stmt){
 		$query = "SELECT public FROM content";
 		$stmt = $db->prepare($query);
 		if ($stmt){
-			$db->closeDB();
-			return true;
+			$query = "SELECT category FROM content";
+			$stmt = $db->prepare($query);
+			if ($stmt) {
+				$db->closeDB();
+				return true;
+			} else {
+				$query = "ALTER TABLE content ADD category text";
+				$db->exec($query);								
+			}
 		} else {
 			$query = "ALTER TABLE content ADD public int DEFAULT 0";
 			$db->exec($query);
@@ -309,9 +319,10 @@ function initSearchDB($checkUpdate){
 			$db->exec($query);
 		}
 		
+		
 	} else if (!$checkUpdate){
 		
-		$query = "CREATE TABLE content (pack text, path text, version text, author text, public int DEFAULT 0)";
+		$query = "CREATE TABLE content (pack text, path text, version text, author text, public int DEFAULT 0, category text)";
 		$query2 = "CREATE VIRTUAL TABLE content_search using FTS3(pack,section,content,tokenize=porter)";
 		$stmt = $db->prepare($query);
 		if ($stmt){		
@@ -464,6 +475,14 @@ function insertUser($userName, $password, $firstName, $lastName, $inst, $hasAdmi
 	return true;
 	}
 	return false;
+}
+
+function updateCategories($data){
+	$res = file_put_contents("categories.txt", $data);
+	if ($res === false)
+		return false;
+	$res = rename("categories.txt", "../uploads/categories.txt");
+	return $res;
 }
 
 ?>
