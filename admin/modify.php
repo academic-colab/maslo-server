@@ -65,6 +65,8 @@ if (isset($_SESSION['init'])){
 				$res = deleteUser($inputData["userName"]);				
 			if ($res)
 				$res = insertUser($inputData["userName"], $inputData["userPass"], $inputData["firstName"], $inputData["lastName"], $inputData["institution"], $isAdmin);
+		} else if ($function == "updateCategories"){
+			$res = updateCategories($data);
 		}
 		if ($res) {
 			echo "OK.";

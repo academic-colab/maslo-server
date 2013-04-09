@@ -88,7 +88,7 @@ thead {
   background: #666;
 }
 thead th.big {
-  text-align: left;
+  text-align: center;
 }
 tbody {
   background: white;
@@ -100,6 +100,7 @@ tbody.proj {
 
 tbody td {
   border-top: 1px solid #AAA;
+  text-align: center;
 }
 
 td.icon, th.icon {
