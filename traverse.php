@@ -62,6 +62,39 @@ function traverseDir($dir) {
 	return $all_json;
 }
 
+/***
+ * Traverse local content directory $dir and generate json data about existing content packs
+ */
+function traverseDirLocal($dir) {
+	$callingURL = $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) ;
+ 	$all_json = "{\"data\":[";
+    if(!($dp = opendir($dir))) die("Cannot open $dir.");
+    $started = false;
+    while((false !== $file = readdir($dp)))
+       if(is_dir("$dir/$file") ){
+            if($file != '.' && $file !='..' && $file != 'tmp'){
+			try {
+				if (is_file("$dir/$file/manifest")) {               
+			   $json_data["path"] = "$dir/$file/";
+			   $json_data["title"] = $file;
+			   $string = json_encode($json_data);
+			   if ($started)
+			   		$all_json = $all_json .",". $string;
+			   else {
+					$all_json = $all_json . $string ;
+					$started = true;
+				
+			  }
+			}
+            } catch(Exception $e){}
+			}
+      }
+      
+    closedir($dp);
+ 	$all_json = $all_json . "]}";
+	return $all_json;
+}
+
 
 /***
  * Traverse Amazon bucket with name $bucket and directory name $dir

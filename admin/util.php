@@ -38,6 +38,16 @@ class MyDB extends SQLite3
 	}
 }
 
+/***
+ * Recursively delete directory
+ */
+function removeDirectory($dirPath) {
+	foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dirPath, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $path) {
+	    $path->isFile() ? unlink($path->getPathname()) : rmdir($path->getPathname());
+	}	
+	rmdir($dirPath);
+}
+
 /*** 
  * Authenticate admin user
  * $userName: the user name
@@ -126,10 +136,12 @@ function preparePreview($title) {
 
 function removePreview($title){
 	$t = str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title)));
-	$cmd = 'rm -rf "../uploads/tmp/preview-'.$t.'"';
-	exec($cmd);
+	$cmd = '../uploads/tmp/preview-'.$t;
+	removeDirectory($cmd);
 	return true;
 }
+
+
 
 /*** 
  * Delete content pack
@@ -162,6 +174,7 @@ function deleteData($title, $isPublished){
 	$baseDir = $s3Config["baseDir"]."/";
 	if (!$isPublished)
 		$baseDir = "qDir-".$baseDir;
+	$t = str_replace(".", "\.", str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title))));
 	if ($s3Config["wantS3"] == "true"){
 		$s3 = new AmazonS3();
 		$response = $s3->get_object_list($bucket, array(
@@ -174,14 +187,17 @@ function deleteData($title, $isPublished){
 			'fileUpload' => '../uploads/search.db'
 		));
 		$file_upload_response = $s3->batch()->send();
-	} else {
-		$t = str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title)));
-		$cmd = 'rm -rf "../qDir-uploads/'.$t.'"';
+	} else {		
+		$cmd = '../qDir-uploads/'.$t;
 		if ($isPublished)
-			$cmd = 'rm -rf "../uploads/'.$t.'"';
-		exec($cmd);
+			$cmd = '../uploads/'.$t;
+		removeDirectory($cmd);		
 	}
-	return true;
+	if ($s3Config["wantWebClient"] == "true") { 
+		$cmd = '../client/content/'.$t;
+		removeDirectory($cmd);	
+	}
+	return true;	
 	}
 	return false;
 }
@@ -228,8 +244,8 @@ function publishData($title){
 		if (!$res){
 			rename("../qDir-uploads/".$title."/contents.zip", "../uploads/".$title."/contents.zip");
 			rename("../qDir-uploads/".$title."/manifest", "../uploads/".$title."/manifest");
-			$cmd = 'rm -rf "../qDir-uploads/'.$t.'"';
-			exec($cmd);
+			$cmd = '../qDir-uploads/'.$t;
+			removeDirectory($cmd);
 		}
 	}
 	return true;
@@ -279,8 +295,8 @@ function unPublishData($title){
 		if (!$res){
 			rename("../uploads/".$title."/contents.zip", "../qDir-uploads/".$title."/contents.zip");
 			rename("../uploads/".$title."/manifest", "../qDir-uploads/".$title."/manifest");
-			$cmd = 'rm -rf "../uploads/'.$t.'"';
-			exec($cmd);
+			$cmd = '../uploads/'.$t;
+			removeDirectory($cmd);
 		}
 	}
 	return true;

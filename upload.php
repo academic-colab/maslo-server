@@ -44,6 +44,18 @@ class MyDB extends SQLite3
 session_start();
 
 /***
+ * Recursively delete directory
+ */
+function removeDirectory($dirPath) {
+	if (!is_dir($dirPath))
+		return;
+	foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dirPath, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $path) {
+	    $path->isFile() ? unlink($path->getPathname()) : rmdir($path->getPathname());
+	}	
+	rmdir($dirPath);
+}
+
+/***
  * Run full text search indexing
  * Processes contents of the uploaded content pack and indexes text data. Entries in search dbs are created
  */
@@ -230,8 +242,8 @@ function publishData($title){
 		if (!$res){
 			rename("qDir-uploads/".$title."/contents.zip", "uploads/".$title."/contents.zip");
 			rename("qDir-uploads/".$title."/manifest", "uploads/".$title."/manifest");
-			$cmd = 'rm -rf "qDir-uploads/'.$t.'"';
-			exec($cmd);
+			$cmd = 'qDir-uploads/'.$t;
+			removeDirectory($cmd);
 		}
 	}
 	return true;
@@ -323,7 +335,9 @@ function receiveUpload(){
 		rename($zipFileName, $mainLocation.$folderName.$zipName);
 		
 		createManifest($packTitle, $mainLocation.$folderName, $zipName, $unchanged);
-		exec('rm -rf "'.$sessionLocation.'"');
+		removeDirectory( 'client/content/'.$folderName);
+		rename($sessionLocation.$folderName, "client/content/".$folderName);
+		removeDirectory($sessionLocation);
 		$s3ConfigStream = file_get_contents("config.json");
 		$s3Config = json_decode($s3ConfigStream, true);
 		if ($s3Config["wantS3"] == "true") {
