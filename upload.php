@@ -206,7 +206,7 @@ function checkForPackExist($packName){
  * returns: true, if pack successfully published, false otherwise
  */
 function publishData($title){
-	if (isset($_SESSION['init'])){
+	if (isset($_SESSION['init']) && strcmp($_SESSION['init'],basename(getcwd())) == 0){
 	$db = new MyDB('uploads/search.db');
 	$query = "UPDATE content SET public = 1 where pack == :id";
 	$stmt = $db->prepare($query);
@@ -409,13 +409,33 @@ if (array_key_exists("handshake", $_POST)){
 	session_regenerate_id(true);
 	echo hash('sha256',session_id());
 	
-} else {
+} else {	
 	if (isset($_POST['userName']) && isset($_POST['password'])) {
-		if (isset($_SESSION['init'])){
+		if (isset($_SESSION['init']) && strcmp($_SESSION['init'],basename(getcwd())) == 0){		
+			if (array_key_exists("numberFiles", $_POST) && $_POST['numberFiles'] > 20){
+				if (isset($_SESSION["countFiles"])) {
+					$_SESSION["countFiles"] += 1;
+				} else {
+					$_SESSION["countFiles"] = 1;
+				}
+				if (intval($_SESSION["countFiles"]) == intval($_POST['numberFiles'])){
+					session_unset();
+					session_destroy();
+					session_regenerate_id(true);
+					echo "The content pack you tried to upload is too large (exceeding 20MB).";
+				} else {
+					echo "OK.";					
+				}
+				return false;
+			}	
 			if (!array_key_exists('contentPackUpload',$_FILES)) {
+
+				session_unset();
+				session_destroy();
+				session_regenerate_id(true);
 				echo "FAILED.";
 			} else {
-				$result = receiveUpload();
+				$result = receiveUpload();				
 				if (!$result){
 					session_unset();
 					session_destroy();
@@ -429,9 +449,9 @@ if (array_key_exists("handshake", $_POST)){
 		}
 		
 		if (checkUser($_POST['userName'],$_POST['password'])) {
-			if (!isset($_SESSION['init'])){			
+			if (!isset($_SESSION['init'])){							
 				session_regenerate_id(false);
-				$_SESSION['init'] = 0;							
+				$_SESSION['init'] = basename(getcwd());							
 				echo "OK.";
 				return false;
 			}
