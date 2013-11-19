@@ -40,6 +40,7 @@ if (isset($_POST['logout'])){
 	if ($res){
 		$_SESSION['init'] = 0;
 		$_SESSION['user'] = $uname;
+		$_SESSION['instance'] = getcwd();
 		session_regenerate_id(false);
 		echo "overview.php";
 	} else {

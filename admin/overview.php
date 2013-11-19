@@ -54,7 +54,7 @@ session_start();
 <body>
 	<div id="divTabs"  class="ui-tabs-hide">
 	<?php
-	if (isset($_SESSION['user']))
+	if (isset($_SESSION['user']) && isset($_SESSION['instance']) && strcmp($_SESSION['instance'],getcwd()) == 0)
 		echo '<ul>
 				<li><a href="#packs" id="packsClick">Content Pack Management</a></li>
 				<li><a href="#users" id="usersClick">User Management</a></li>
@@ -65,7 +65,7 @@ session_start();
 	<h3>Content Pack Overview</h3>		
 	<div class="extra">
 	<?php
-	if (isset($_SESSION['user'])){
+	if (isset($_SESSION['user']) && isset($_SESSION['instance']) && strcmp($_SESSION['instance'],getcwd()) == 0){
 		echo '<a href="#" onclick="logout();return false;">Logout</a>&nbsp;&nbsp;&nbsp;';
 	} else {
 		echo '<a href="index.php">Login</a>&nbsp;&nbsp;&nbsp;';
@@ -74,7 +74,7 @@ session_start();
 	<a href="#" onclick="help();return false;">Help</a><img src="images/maslo_icon_logo.png" /></div>
 	<div class="loginInfo">
 	<?php
-	if (isset($_SESSION['user'])){
+	if (isset($_SESSION['user']) && isset($_SESSION['instance']) && strcmp($_SESSION['instance'],getcwd()) == 0){
 		echo "<b>Logged in as: </b> ".$_SESSION['user'];
 	} else {
 		echo "<b>Not logged in.</b>";
@@ -89,7 +89,7 @@ session_start();
 			/* If user has authenticated session, query all exisiting users and their roles. Display them in
 			 	user mangement tab 
 			*/
-			if (isset($_SESSION['user'])) {
+			if (isset($_SESSION['user']) && isset($_SESSION['instance']) && strcmp($_SESSION['instance'],getcwd()) == 0) {
 			echo '<table>
 				<thead>
 					<tr>
@@ -154,7 +154,7 @@ session_start();
 					<th class="big">Last Modified</th>					
 					<th class="big">Size</th>
 					<?php
-					if (isset($_SESSION['user'])){
+					if (isset($_SESSION['user']) && isset($_SESSION['instance']) && strcmp($_SESSION['instance'],getcwd()) == 0){
 						echo "<th>Location</th>";
 						echo "<th class=\"big\">Uploaded by</th>";
 						echo "<th>Published</th>";
@@ -207,7 +207,7 @@ session_start();
 					$title = str_replace(">","&gt;", str_replace("<","&lt;", $title ) );
 						
 					echo "<td><a href='#' onclick='prepPreview($(this).text());'>".$title."</a></td>";
-					if (isset($_SESSION['user'])) {
+					if (isset($_SESSION['user']) && isset($_SESSION['instance']) && strcmp($_SESSION['instance'],getcwd()) == 0) {
 						echo "<td class='packCategory' onClick='getCategories();return false;'>".$category."</td>";
 					} else {
 						echo "<td class='packCategory'>".$category."</td>";
@@ -215,7 +215,7 @@ session_start();
 					echo "<td>".$version."</td>";
 					echo "<td>".$json[$i]["date"]."</td>";					
 					echo "<td>".$size."</td>";
-					if (isset($_SESSION['user'])) {						
+					if (isset($_SESSION['user']) && isset($_SESSION['instance']) && strcmp($_SESSION['instance'],getcwd()) == 0) {						
 						$loc = "Local";
 						if ($s3Config["wantS3"] == "true") {
 							$loc = "S3";
