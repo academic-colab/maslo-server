@@ -174,7 +174,7 @@ function deleteData($title, $isPublished){
 	$baseDir = $s3Config["baseDir"]."/";
 	if (!$isPublished)
 		$baseDir = "qDir-".$baseDir;
-	$t = str_replace(".", "\.", str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title))));
+	$t = str_replace('"', '\"', str_replace('`', '\`', str_replace('´', '\´', $title)));
 	if ($s3Config["wantS3"] == "true"){
 		$s3 = new AmazonS3();
 		$response = $s3->get_object_list($bucket, array(

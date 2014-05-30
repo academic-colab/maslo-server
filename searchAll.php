@@ -27,10 +27,6 @@ require_once 'traverse.php';
 
 class MyDB extends SQLite3
 {
-    function __construct()
-    {
-        $this->open('uploads/search.db');
-    }
 
 	function __construct($d)
     {
@@ -66,25 +62,25 @@ function processInput() {
  * Query the database for search string
  * @return: JSON string containing the result
  */
-function queryDB() {
-	$callingURL = "http://".$_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF'])."/"  ;
+function queryDB($d) {
+	$callingURL = "http://".$_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF'])."/".$d."/"  ;
 	$parameter = processInput();
-	$db = new MyDB();
+	$db = new MyDB($d);
 	
-	$stmt = $db->prepare("SELECT content_search.pack as title, section, '".$callingURL."' || path as filename FROM content_search, content WHERE content match :id and content_search.pack == content.pack and content.public == 1 order by title");
+	$stmt = $db->prepare("SELECT content_search.pack as title, section, '".$callingURL."' || path as filename, content.version as version FROM content_search, content WHERE content match :id and content_search.pack == content.pack and content.public == 1 order by title");
 	$stmt->bindValue(':id', $parameter, SQLITE3_TEXT);
 
 
 	$result = $stmt->execute();
 	
-	$jsonString = "{\"data\":[";
+	$jsonString = "{\"name\":\"".$d."\",\"content\":[";
 	$started = false;
 	$currentPack = null;
 	$sections = array();
 	$resRow = array();
 	$numResults = 0;
 	$jsonData = array();
-	$s3ConfigStream = file_get_contents("config.json");
+	$s3ConfigStream = file_get_contents($d."/config.json");
 	$s3Config = json_decode($s3ConfigStream, true);
 	if ($s3Config["wantS3"] == "true") {
 		$json = json_decode(traverseDirAmazon($s3Config["bucket"],$s3Config["baseDir"]),true);
@@ -117,6 +113,7 @@ function queryDB() {
 		}
 		$resRow["title"] = $resultRows["title"];
 		$resRow["filename"] = $resultRows["filename"];
+		$resRow["version"] = $resultRows["version"];
 		if (array_key_exists($resRow["title"] , $jsonData)) {
 			$resRow["filename"] = $jsonData[$resRow["title"]];
 		}
@@ -140,7 +137,28 @@ function queryDB() {
 	
 }
 
-$jString = queryDB();
+function queryAll(){
+	$jsonAll = array();
+	$handle = opendir(".");
+	$contentFound = false;
+	while (1) {
+		$json = "";
+		$f = readdir($handle);
+		if (!$f) {
+			break;
+		}
+		if (is_dir($f) && $f != "s3sdk" && $f != "." && $f != "..") {
+			$json = queryDB($f);
+			$json = json_decode($json, true);
+			if (count($json["content"]) > 0)
+				array_push($jsonAll, $json);
+		}
+	}
+	$json = "{\"data\": ".json_encode($jsonAll)."}";
+	return $json;
+}
+
+$jString = queryAll();
 echo $jString;
 
 ?>

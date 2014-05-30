@@ -30,7 +30,7 @@ require_once 's3sdk/sdk.class.php';
  */
 function traverseDir($dir) {
 	$callingURL = $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) ;
- 	$all_json = "{\"data\":[";
+ 	$all_json = "{\"content\":[";
     if(!($dp = opendir($dir))) die("Cannot open $dir.");
     $started = false;
     while((false !== $file = readdir($dp)))
@@ -67,7 +67,7 @@ function traverseDir($dir) {
  */
 function traverseDirLocal($dir) {
 	$callingURL = $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) ;
- 	$all_json = "{\"data\":[";
+ 	$all_json = "{\"content\":[";
     if(!($dp = opendir($dir))) die("Cannot open $dir.");
     $started = false;
     while((false !== $file = readdir($dp)))
@@ -104,7 +104,7 @@ function traverseDirAmazon($bucket, $dir){
 	$object_list_array = $s3->get_object_list($bucket, array(
 	  'prefix' => $dir
 	));
-	$all_json = "{\"data\":[";
+	$all_json = "{\"content\":[";
 	$started = false;
 	foreach ($object_list_array as $obj) {
 		$pos = strpos($obj, "search.db");
@@ -143,6 +143,55 @@ function doTraverse(){
 		$json = traverseDirAmazon($s3Config["bucket"],$s3Config["baseDir"]);
 	} else{
 		$json = traverseDir($default_dir);
+	}
+	return $json;
+}
+
+/***
+ * Pick traversal method automatically based on configuration and return json data
+ */
+function doTraverseRecurse(){
+	$jsonAll = array();
+	$handle = opendir(".");
+	$contentFound = false;
+	while (1) {
+		$json = "";
+		$f = readdir($handle);
+		if (!$f) {
+			break;
+		}
+		if (is_dir($f) && $f != "s3sdk" && $f != "." && $f != "..") {
+			$default_dir = $f."/uploads/";
+			$s3ConfigStream = file_get_contents($f."/config.json");
+			if ($s3ConfigStream) {
+				$contentFound = true;
+				$s3Config = json_decode($s3ConfigStream, true);
+				if ($s3Config["wantS3"] == "true") {
+					$json = traverseDirAmazon($s3Config["bucket"],$s3Config["baseDir"]);
+				} else{
+					$json = traverseDir($default_dir);
+				}
+			}
+			$jsonDec = json_decode($json, true);
+			$jsonDec["name"] = $f;
+			array_push($jsonAll, $jsonDec);
+		}
+	}
+	if ($contentFound){
+		$json = "{\"data\": ".json_encode($jsonAll)."}";
+	} else {
+		$default_dir = "uploads/";
+		$s3ConfigStream = file_get_contents("config.json");
+		$s3Config = json_decode($s3ConfigStream, true);
+		if ($s3Config["wantS3"] == "true") {
+			$json = traverseDirAmazon($s3Config["bucket"],$s3Config["baseDir"]);
+		} else{
+			$json = traverseDir($default_dir);
+		}
+		$jsonDec = json_decode($json, true);
+		$jsonDec["name"] = "Store";
+		array_push($jsonAll, $jsonDec);
+		$json = "{\"data\": ".json_encode($jsonAll)."}";
 	}
 	return $json;
 }
